@@ -194,6 +194,7 @@ tbody tr:nth-child(even) td{background:var(--surface-2)}
     <label class="label" for="lg-email">E-mail</label><input id="lg-email" class="inp" type="email" autocomplete="username" required>
     <label class="label" for="lg-senha">Senha</label><input id="lg-senha" class="inp" type="password" autocomplete="current-password" required>
     <button class="btn" type="submit" id="lg-btn">Entrar</button>
+    <button class="btn link" type="button" id="lg-modo">Primeiro acesso: criar minha senha</button>
     <div class="erro" id="lg-erro" role="alert"></div>
     <p class="ref" style="margin:0">Em computador compartilhado, toque em “Sair” ao terminar. A página sai sozinha após 30 minutos sem uso.</p>
   </form>
@@ -1128,10 +1129,23 @@ function mostrarLogin(msg){ $('#login').hidden=false; $('#lg-erro').textContent=
 if(!sb){ mostrarLogin('Site ainda não configurado (faltam as chaves do Supabase na Netlify).'); }
 else {
   sb.auth.getSession().then(({data})=>{ const u=data.session?.user; if(u){ $('#login').hidden=true; resolverLogin(u.id); } else mostrarLogin(); });
+  let criando=false;
+  $('#lg-modo').addEventListener('click',()=>{ criando=!criando; $('#lg-btn').textContent=criando?'Criar senha':'Entrar';
+    $('#lg-modo').textContent=criando?'Já tenho senha: entrar':'Primeiro acesso: criar minha senha'; $('#lg-senha').autocomplete=criando?'new-password':'current-password'; $('#lg-erro').textContent=''; });
   $('#login-form').addEventListener('submit', async e=>{ e.preventDefault(); $('#lg-btn').disabled=true; $('#lg-erro').textContent='';
-    const {data,error}=await sb.auth.signInWithPassword({email:$('#lg-email').value.trim(), password:$('#lg-senha').value});
+    const email=$('#lg-email').value.trim(), password=$('#lg-senha').value;
+    if(criando){
+      if(password.length<8){ $('#lg-btn').disabled=false; $('#lg-erro').textContent='Use uma senha com pelo menos 8 caracteres.'; return; }
+      const {data:d2,error:e2}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
+      $('#lg-btn').disabled=false;
+      if(e2){ $('#lg-erro').textContent='Não foi possível criar a senha. Este site é de uso exclusivo da Dra. Anna.'; return; }
+      if(d2.session){ $('#login').hidden=true; resolverLogin(d2.user.id); return; }
+      $('#lg-erro').textContent='Pronto! Enviamos um e-mail de confirmação. Clique no link do e-mail e depois volte aqui para entrar.';
+      criando=false; $('#lg-btn').textContent='Entrar'; $('#lg-modo').textContent='Primeiro acesso: criar minha senha'; return;
+    }
+    const {data,error}=await sb.auth.signInWithPassword({email, password});
     $('#lg-btn').disabled=false;
-    if(error){ $('#lg-erro').textContent='E-mail ou senha incorretos.'; return; }
+    if(error){ $('#lg-erro').textContent = /confirm/i.test(error.message) ? 'Falta confirmar o e-mail: abra o link que enviamos.' : 'E-mail ou senha incorretos.'; return; }
     $('#lg-senha').value=''; $('#login').hidden=true; resolverLogin(data.user.id); });
 }
 async function sair(){ try{ localStorage.removeItem(LS); }catch(e){} if(sb) await sb.auth.signOut(); location.reload(); }
