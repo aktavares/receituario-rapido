@@ -7,3 +7,5 @@ Ferramenta pessoal da Dra. Anna para montar receitas pediátricas com cálculo d
 - `supabase.sql` — tabelas `revisao` e `meus` com RLS (cada usuária só vê as próprias linhas).
 
 Não guarda dados de pacientes. Conteúdo clínico (doses) só muda com aprovação da Dra. Anna.
+
+Site: https://receituario-rapido.netlify.app
