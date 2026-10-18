@@ -843,9 +843,167 @@ const MEDS = [
   {id:'geng',label:'Gengivoestomatite herpética',modo:'kg',base:'dose',min:15,max:15,padrao:15,maxDose:200,freq:'5 vezes ao dia',dosesDia:5,dias:7,
    obs:'Benefício maior se iniciado nas primeiras 72 h.',fonte:'Amir, BMJ 1997; BNF for Children'}]},
 
+// ---------- Lote 5 (18/10/2026) ----------
+{id:'ceftriax', nome:'Ceftriaxona (IM)', rx:'Ceftriaxona', grupo:'Antibióticos', comerciais:['Rocefin','Triaxin','genérico'], un:'mg',
+ apres:[
+  {id:'f500',label:'500 mg frasco-ampola IM',forma:'mg',conc:500,passo:10,via:'intramuscular',verbo:'Aplicar',viaTxt:'via intramuscular profunda'},
+  {id:'f1g',label:'1 g frasco-ampola IM',forma:'mg',conc:1000,passo:10,via:'intramuscular',verbo:'Aplicar',viaTxt:'via intramuscular profunda'}],
+ ind:[
+  {id:'oma',label:'OMA (dose única ou 3 dias se falha)',modo:'kg',base:'dose',min:50,max:50,padrao:50,maxDose:1000,unica:true,dosesDia:1,
+   obs:'OMA com falha ao tratamento oral: 50 mg/kg 1 vez ao dia por 3 dias. Diluir com lidocaína 1% (uso IM). Não usar em recém-nascido com hiperbilirrubinemia ou com cálcio IV.',fonte:'AAP 2013 (OMA); bula Rocefin (Anvisa)'},
+  {id:'grave',label:'Infecção grave – dose antes de transferir/encaminhar',modo:'kg',base:'dose',min:50,max:100,padrao:100,maxDose:2000,unica:true,dosesDia:1,
+   obs:'Meningite: 100 mg/kg/dia (máx. 4 g/dia). Ajustar conforme o caso.',fonte:'AAP Red Book 2024; bula Rocefin'}]},
+{id:'nitrofur', nome:'Nitrofurantoína', grupo:'Antibióticos', comerciais:['Macrodantina','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'5 mg/mL suspensão oral',forma:'liquido',conc:5,frasco:120,via:'oral',conferir:'Confirmar disponibilidade da suspensão (muitas vezes manipulada).'},
+  {id:'c100',label:'100 mg cápsula',forma:'unid',conc:100,un:'cápsula',frac:false,via:'oral'}],
+ ind:[
+  {id:'itu',label:'Cistite (ITU baixa)',modo:'kg',base:'dia',min:5,max:7,padrao:6,maxDose:100,intervalo:6,dias:7,
+   obs:'Não serve para pielonefrite ou febre (não atinge o rim). A partir de 1 mês. Tomar com alimento.',fonte:'AAP 2011 (ITU); BNF for Children'},
+  {id:'prof',label:'Profilaxia de ITU',modo:'kg',base:'dia',min:1,max:2,padrao:1,maxDia:100,freq:'1 vez ao dia, à noite',dosesDia:1,continuo:true,diasQtd:30,fonte:'BNF for Children; SBP'}]},
+{id:'fosfo', nome:'Fosfomicina', grupo:'Antibióticos', comerciais:['Monuril','genérico'], un:'',
+ apres:[{id:'s',label:'3 g sachê (granulado)',forma:'unid',conc:1,un:'sachê',via:'oral'}],
+ ind:[{id:'itu',label:'Cistite não complicada (adolescentes)',modo:'opcoes',qtdPadrao:'1 sachê',
+  opcoes:[{label:'≥ 12 anos: 3 g dose única',texto:'Dissolver 1 sachê em meio copo de água e tomar em dose única, à noite, com a bexiga vazia.'}],
+  obs:'Uso pediátrico abaixo de 12 anos: conferir bula/apresentação pediátrica.',fonte:'Bula Monuril (Anvisa)'}]},
+{id:'oselta', nome:'Oseltamivir', grupo:'Outros', comerciais:['Tamiflu','genérico (SUS)'], un:'mg',
+ apres:[
+  {id:'c30',label:'30 mg cápsula',forma:'unid',conc:30,un:'cápsula',frac:false,via:'oral'},
+  {id:'c45',label:'45 mg cápsula',forma:'unid',conc:45,un:'cápsula',frac:false,via:'oral'},
+  {id:'c75',label:'75 mg cápsula',forma:'unid',conc:75,un:'cápsula',frac:false,via:'oral'},
+  {id:'s',label:'6 mg/mL suspensão (preparada a partir da cápsula)',forma:'liquido',conc:6,frasco:60,via:'oral',conferir:'Suspensão preparada em farmácia ou diluindo a cápsula conforme o protocolo do Ministério da Saúde.'}],
+ ind:[
+  {id:'tto',label:'Influenza – tratamento (≥ 1 ano)',modo:'faixa',intervalo:12,dias:5,
+   faixas:[{label:'≤ 15 kg – 30 mg',dose:30,kgMin:0,kgMax:15.01},{label:'> 15 a 23 kg – 45 mg',dose:45,kgMin:15.01,kgMax:23.01},{label:'> 23 a 40 kg – 60 mg',dose:60,kgMin:23.01,kgMax:40.01},{label:'> 40 kg – 75 mg',dose:75,kgMin:40.01,kgMax:999}],
+   obs:'Iniciar o quanto antes (ideal até 48 h), mas indicado mesmo depois nos grupos de risco. A cápsula pode ser aberta e misturada em alimento doce.',fonte:'Ministério da Saúde – Protocolo de Influenza; CDC'},
+  {id:'lact',label:'Influenza – tratamento (< 1 ano)',modo:'kg',base:'dose',min:3,max:3,padrao:3,intervalo:12,dias:5,fonte:'Ministério da Saúde – Protocolo de Influenza; CDC'}]},
+{id:'fluco', nome:'Fluconazol', grupo:'Outros', comerciais:['Zoltec','genérico'], un:'mg',
+ apres:[
+  {id:'c50',label:'50 mg cápsula',forma:'unid',conc:50,un:'cápsula',frac:false,via:'oral'},
+  {id:'c100',label:'100 mg cápsula',forma:'unid',conc:100,un:'cápsula',frac:false,via:'oral'},
+  {id:'c150',label:'150 mg cápsula',forma:'unid',conc:150,un:'cápsula',frac:false,via:'oral'}],
+ ind:[{id:'cand',label:'Candidíase oral/esofágica (falha da nistatina)',modo:'kg',base:'dia',min:3,max:6,padrao:3,maxDia:200,freq:'1 vez ao dia',dosesDia:1,dias:14,
+  obs:'Dose de ataque de 6 mg/kg no 1º dia. Para crianças pequenas, pode ser manipulado em suspensão. Interações via CYP.',fonte:'IDSA 2016 (candidíase); BNF for Children'}]},
+{id:'miconagel', nome:'Miconazol gel oral', rx:'Miconazol 20 mg/g gel oral', grupo:'Outros', comerciais:['Daktarin gel oral','genérico'], un:'',
+ apres:[{id:'g',label:'gel oral (bisnaga 40 g)',forma:'unid',conc:1,un:'bisnaga',via:'oral'}],
+ ind:[{id:'cand',label:'Candidíase oral (sapinho)',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'6 a 24 meses: 1,25 mL 4x/dia',texto:'Aplicar 1,25 mL do gel na boca, espalhando com o dedo limpo, 4 vezes ao dia, após as mamadas. Manter por 7 dias após melhorar.'},{label:'≥ 2 anos: 2,5 mL 4x/dia',texto:'Aplicar 2,5 mL do gel na boca, 4 vezes ao dia, após as refeições. Manter por 7 dias após melhorar.'}],
+  obs:'Não usar em menores de 4 a 6 meses (risco de engasgo; conferir bula). Interage com varfarina.',fonte:'Bula Daktarin gel oral (Anvisa)'}]},
+{id:'iprat', nome:'Ipratrópio para nebulização', rx:'Brometo de ipratrópio', grupo:'Respiratório', comerciais:['Atrovent','Ares','genérico'], un:'mg',
+ apres:[{id:'g',label:'0,25 mg/mL solução para nebulização',forma:'gotas',conc:0.25,gotasMl:20,frasco:20,via:'inalatório',verbo:'Fazer nebulização com',viaTxt:'junto com o salbutamol, diluídas em 3 mL de soro fisiológico 0,9%'}],
+ ind:[{id:'crise',label:'Crise de asma moderada/grave (associado ao salbutamol)',modo:'faixa',faixaPadrao:0,intervalo:6,cond:'nas crises, conforme orientação',
+  faixas:[{label:'< 12 anos – 0,25 mg (20 gotas)',dose:0.25},{label:'≥ 12 anos – 0,5 mg (40 gotas)',dose:0.5}],
+  obs:'Benefício principal nas primeiras horas da crise moderada/grave, geralmente no pronto-atendimento (a cada 20 min, até 3 doses).',fonte:'GINA 2024; bula Atrovent'}]},
+{id:'fluticainal', nome:'Fluticasona spray oral', rx:'Propionato de fluticasona', grupo:'Respiratório', comerciais:['Flixotide','genérico'], un:'mcg',
+ apres:[
+  {id:'50',label:'50 mcg/jato aerossol',forma:'unid',conc:50,un:'jato',frac:false,frasco:120,via:'inalatório',verbo:'Fazer',viaTxt:'com espaçador'},
+  {id:'250',label:'250 mcg/jato aerossol',forma:'unid',conc:250,un:'jato',frac:false,frasco:120,via:'inalatório',verbo:'Fazer',viaTxt:'com espaçador'}],
+ ind:[{id:'ctrl',label:'Controle da asma',modo:'faixa',intervalo:12,continuo:true,diasQtd:30,extra:'Enxaguar a boca após o uso.',
+  faixas:[{label:'≤ 5 anos (dose baixa) – 50 mcg 1 vez ao dia',dose:50,t:'1 vez ao dia',d:1},{label:'6 a 11 anos (dose baixa) – 50 mcg de 12/12 h',dose:50},{label:'6 a 11 anos (dose média) – 100 mcg de 12/12 h',dose:100},{label:'≥ 12 anos (dose média) – 250 mcg de 12/12 h',dose:250}],
+  fonte:'GINA 2024'}]},
+{id:'mometanasal', nome:'Mometasona spray nasal', rx:'Furoato de mometasona 50 mcg/jato', grupo:'Respiratório', comerciais:['Nasonex','genérico'], un:'',
+ apres:[{id:'sp',label:'spray nasal 50 mcg/jato',forma:'unid',conc:1,un:'frasco',via:'nasal'}],
+ ind:[{id:'rin',label:'Rinite alérgica',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'2 a 11 anos: 1 jato em cada narina 1x/dia',texto:'Aplicar 1 jato em cada narina 1 vez ao dia.'},{label:'≥ 12 anos: 2 jatos em cada narina 1x/dia',texto:'Aplicar 2 jatos em cada narina 1 vez ao dia.'}],
+  obs:'A partir de 2 anos. Efeito pleno em alguns dias de uso regular.',fonte:'Bula Nasonex (Anvisa)'}]},
+{id:'avamys', nome:'Fluticasona spray nasal', rx:'Furoato de fluticasona 27,5 mcg/jato', grupo:'Respiratório', comerciais:['Avamys','genérico'], un:'',
+ apres:[{id:'sp',label:'spray nasal 27,5 mcg/jato',forma:'unid',conc:1,un:'frasco',via:'nasal'}],
+ ind:[{id:'rin',label:'Rinite alérgica',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'2 a 11 anos: 1 jato em cada narina 1x/dia',texto:'Aplicar 1 jato em cada narina 1 vez ao dia.'},{label:'≥ 12 anos: 2 jatos em cada narina 1x/dia',texto:'Aplicar 2 jatos em cada narina 1 vez ao dia.'}],
+  obs:'A partir de 2 anos.',fonte:'Bula Avamys (Anvisa)'}]},
+{id:'prednisona', nome:'Prednisona', grupo:'Respiratório', comerciais:['Meticorten','genérico'], un:'mg',
+ apres:[
+  {id:'c5',label:'5 mg comprimido',forma:'unid',conc:5,un:'comprimido',frac:true,via:'oral'},
+  {id:'c20',label:'20 mg comprimido',forma:'unid',conc:20,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'asma',label:'Crise de asma',modo:'kg',base:'dia',min:1,max:2,padrao:1,maxDia:40,freq:'1 vez ao dia pela manhã',dosesDia:1,dias:5,
+  obs:'Para crianças que não engolem comprimido, preferir prednisolona solução.',fonte:'GINA 2024'}]},
+{id:'levoceti', nome:'Levocetirizina', grupo:'Alergia', comerciais:['Zyxem','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'0,5 mg/mL solução oral',forma:'liquido',conc:0.5,frasco:150,via:'oral'},
+  {id:'c',label:'5 mg comprimido',forma:'unid',conc:5,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'al',label:'Rinite alérgica / urticária',modo:'faixa',faixaPadrao:1,dias:10,
+  faixas:[{label:'6 meses a 1 ano – 1,25 mg 1 vez ao dia',dose:1.25,t:'1 vez ao dia',d:1},{label:'2 a 5 anos – 1,25 mg de 12/12 h',dose:1.25,t:H(12),d:2},{label:'≥ 6 anos – 5 mg 1 vez ao dia',dose:5,t:'1 vez ao dia',d:1}],
+  fonte:'Bula Zyxem (Anvisa)'}]},
+{id:'ebastina', nome:'Ebastina', grupo:'Alergia', comerciais:['Ebastel','genérico'], un:'mg',
+ apres:[
+  {id:'x',label:'1 mg/mL xarope',forma:'liquido',conc:1,frasco:60,via:'oral'},
+  {id:'c',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'al',label:'Rinite alérgica / urticária',modo:'faixa',faixaPadrao:0,freq:'1 vez ao dia',dosesDia:1,dias:10,
+  faixas:[{label:'2 a 5 anos – 2,5 mg',dose:2.5},{label:'6 a 11 anos – 5 mg',dose:5},{label:'≥ 12 anos – 10 mg',dose:10}],
+  fonte:'Bula Ebastel (Anvisa)'}]},
+{id:'adrenalina', nome:'Adrenalina (anafilaxia)', rx:'Epinefrina 1 mg/mL', grupo:'Outros', comerciais:['Adrenalina (genérico)','Drenalin'], un:'mg',
+ apres:[{id:'a',label:'1 mg/mL ampola',forma:'liquido',conc:1,frasco:1,via:'intramuscular',verbo:'Aplicar',viaTxt:'via intramuscular, na face lateral da coxa'}],
+ ind:[{id:'ana',label:'Anafilaxia – dose IM',modo:'kg',base:'dose',min:0.01,max:0.01,padrao:0.01,maxDose:0.5,unica:true,dosesDia:1,extra:'Pode repetir a cada 5 a 15 minutos, se necessário. Chamar o SAMU 192 / encaminhar à emergência.',
+  obs:'Máximo 0,3 mg (pré-púberes) a 0,5 mg (adolescentes) por dose. 0,01 mL/kg da solução 1 mg/mL.',fonte:'WAO 2020; ASBAI'}]},
+{id:'domperi', nome:'Domperidona', grupo:'Gastro', comerciais:['Motilium','genérico'], un:'mg',
+ apres:[{id:'s',label:'1 mg/mL suspensão oral',forma:'liquido',conc:1,frasco:100,via:'oral'}],
+ ind:[{id:'vom',label:'Náuseas / vômitos (uso curto)',modo:'kg',base:'dose',min:0.25,max:0.25,padrao:0.25,maxDose:10,maxDia:30,intervalo:8,dias:5,
+  obs:'EMA 2014: até 0,25 mg/kg 3 vezes ao dia, no máximo 1 semana. Risco de arritmia (QT longo); evitar com outros que aumentam o QT.',fonte:'EMA 2014; bula Motilium'}]},
+{id:'omepra', nome:'Omeprazol', grupo:'Gastro', comerciais:['Losec','genérico','manipulado'], un:'mg',
+ apres:[
+  {id:'s',label:'2 mg/mL suspensão (manipulada)',forma:'liquido',conc:2,frasco:100,via:'oral',conferir:'Formulação manipulada: confirmar concentração com a farmácia.'},
+  {id:'c10',label:'10 mg cápsula',forma:'unid',conc:10,un:'cápsula',frac:false,via:'oral'},
+  {id:'c20',label:'20 mg cápsula',forma:'unid',conc:20,un:'cápsula',frac:false,via:'oral'}],
+ ind:[{id:'drge',label:'DRGE / esofagite',modo:'faixa',freq:'1 vez ao dia, 30 min antes do café da manhã',dosesDia:1,dias:28,
+  faixas:[{label:'5 a 10 kg – 5 mg',dose:5,kgMin:5,kgMax:10},{label:'10 a 20 kg – 10 mg',dose:10,kgMin:10,kgMax:20},{label:'≥ 20 kg – 20 mg',dose:20,kgMin:20,kgMax:999}],
+  obs:'Tratar por 4 a 8 semanas e reavaliar. A cápsula pode ser aberta e os grânulos misturados em alimento ácido (sem mastigar).',fonte:'NASPGHAN/ESPGHAN 2018; bula Losec'}]},
+{id:'esomepra', nome:'Esomeprazol', grupo:'Gastro', comerciais:['Nexium','genérico'], un:'mg',
+ apres:[{id:'s10',label:'10 mg sachê (granulado)',forma:'unid',conc:10,un:'sachê',frac:false,via:'oral'}],
+ ind:[{id:'drge',label:'DRGE (1 a 11 anos)',modo:'faixa',freq:'1 vez ao dia',dosesDia:1,dias:56,
+  faixas:[{label:'10 a 20 kg – 10 mg',dose:10,kgMin:10,kgMax:20},{label:'≥ 20 kg – 10 a 20 mg',dose:20,kgMin:20,kgMax:999}],
+  obs:'Dissolver o sachê em água e tomar em 30 minutos.',fonte:'Bula Nexium (Anvisa)'}]},
+{id:'oleomin', nome:'Óleo mineral', grupo:'Gastro', comerciais:['Nujol','Purol','genérico'], un:'mL',
+ apres:[{id:'o',label:'óleo mineral (frasco)',forma:'liquido',conc:1,frasco:100,via:'oral'}],
+ ind:[{id:'cons',label:'Constipação (> 1 ano)',modo:'kg',base:'dia',min:1,max:3,padrao:1,maxDia:90,freq:'1 vez ao dia, longe das refeições',dosesDia:1,dias:30,
+  obs:'Contraindicado em menores de 1 ano e em quem tem risco de aspiração (refluxo importante, disfagia, alteração neurológica). Não dar deitado.',fonte:'NASPGHAN 2014'}]},
+{id:'glicerina', nome:'Supositório de glicerina', grupo:'Gastro', comerciais:['Supositório de glicerina infantil'], un:'',
+ apres:[{id:'s',label:'supositório infantil',forma:'unid',conc:1,un:'supositório',via:'retal'}],
+ ind:[{id:'cons',label:'Fezes endurecidas',modo:'opcoes',qtdPadrao:'1 caixa',
+  opcoes:[{label:'1 supositório se necessário',texto:'Aplicar 1 supositório via retal, se necessário, no máximo 1 vez ao dia.'}],
+  obs:'Uso eventual; não usar de rotina.',fonte:'SBP'}]},
+{id:'secnida', nome:'Secnidazol', grupo:'Outros', comerciais:['Secnidal','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'30 mg/mL suspensão oral',forma:'liquido',conc:30,frasco:15,via:'oral',conferir:'Confirmar concentração e volume do frasco da apresentação pediátrica.'},
+  {id:'c',label:'1 g comprimido',forma:'unid',conc:1000,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'gia',label:'Giardíase / amebíase intestinal',modo:'kg',base:'dose',min:30,max:30,padrao:30,maxDose:2000,unica:true,dosesDia:1,
+  obs:'Tomar após uma refeição. Evitar bebida alcoólica (adolescentes).',fonte:'Bula Secnidal (Anvisa)'}]},
+{id:'fluoxe', nome:'Fluoxetina', grupo:'Saúde mental', comerciais:['Prozac','Daforin','Verotina','genérico'], un:'mg', controle:'C1',
+ apres:[
+  {id:'g',label:'20 mg/mL gotas',forma:'gotas',conc:20,gotasMl:20,frasco:20,via:'oral',conferir:'Conferir nº de gotas/mL da marca (em geral 1 gota = 1 mg).'},
+  {id:'c10',label:'10 mg cápsula/comprimido',forma:'unid',conc:10,un:'comprimido',frac:false,via:'oral'},
+  {id:'c20',label:'20 mg cápsula',forma:'unid',conc:20,un:'cápsula',frac:false,via:'oral'}],
+ ind:[{id:'dep',label:'Depressão / ansiedade / TOC (≥ 8 anos)',modo:'livre',padrao:10,step:5,maxDia:60,continuo:true,diasQtd:30,freqs:[{t:'pela manhã',d:1}],
+  guia:['Iniciar 10 mg/dia.','Após 1 a 2 semanas, 20 mg/dia.','TOC: pode chegar a 60 mg/dia. Monitorar ideação suicida nas primeiras semanas (alerta da FDA).'],
+  fonte:'Bula Prozac; AACAP'}]},
+{id:'sertra', nome:'Sertralina', grupo:'Saúde mental', comerciais:['Zoloft','Assert','Tolrest','genérico'], un:'mg', controle:'C1',
+ apres:[
+  {id:'c25',label:'25 mg comprimido',forma:'unid',conc:25,un:'comprimido',frac:true,via:'oral'},
+  {id:'c50',label:'50 mg comprimido',forma:'unid',conc:50,un:'comprimido',frac:true,via:'oral'},
+  {id:'c100',label:'100 mg comprimido',forma:'unid',conc:100,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'toc',label:'TOC / ansiedade (≥ 6 anos)',modo:'livre',padrao:25,step:12.5,maxDia:200,continuo:true,diasQtd:30,freqs:[{t:'1 vez ao dia',d:1}],
+  guia:['6 a 12 anos: iniciar 25 mg/dia.','13 a 17 anos: iniciar 50 mg/dia.','Aumentar a cada 1 semana ou mais. Máximo 200 mg/dia. Monitorar ideação suicida.'],
+  fonte:'Bula Zoloft; AACAP'}]},
+{id:'escita', nome:'Escitalopram', grupo:'Saúde mental', comerciais:['Lexapro','Reconter','genérico'], un:'mg', controle:'C1',
+ apres:[
+  {id:'g',label:'20 mg/mL gotas',forma:'gotas',conc:20,gotasMl:20,frasco:15,via:'oral',conferir:'Lexapro gotas: 1 gota = 1 mg. Conferir a marca.'},
+  {id:'c10',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'dep',label:'Depressão (≥ 12 anos)',modo:'livre',padrao:10,step:2.5,maxDia:20,continuo:true,diasQtd:30,freqs:[{t:'1 vez ao dia',d:1}],
+  guia:['Iniciar 5 a 10 mg/dia.','Ajustar após 3 semanas ou mais.','Máximo 20 mg/dia. Uso abaixo de 12 anos é off-label. Monitorar ideação suicida.'],
+  fonte:'FDA (Lexapro); AACAP'}]},
+{id:'pimecro', nome:'Pimecrolimo creme 1%', rx:'Pimecrolimo 1%', grupo:'Pele', comerciais:['Elidel'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'da',label:'Dermatite atópica leve a moderada (face e dobras)',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2x/dia nas lesões',texto:'Aplicar camada fina nas lesões 2 vezes ao dia até melhorar.'}],
+  obs:'Conferir idade mínima na bula brasileira (3 meses ou 2 anos). Pode arder nos primeiros dias. Proteger do sol.',fonte:'Bula Elidel (Anvisa); AAD 2023'}]},
+{id:'tacro', nome:'Tacrolimo pomada 0,03%', rx:'Tacrolimo 0,03%', grupo:'Pele', comerciais:['Protopic','Tarfic'], un:'',
+ apres:[{id:'p',label:'pomada (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'da',label:'Dermatite atópica moderada a grave (2 a 15 anos)',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2x/dia por até 3 semanas, depois 1x/dia',texto:'Aplicar camada fina nas lesões 2 vezes ao dia por até 3 semanas; depois, 1 vez ao dia até melhorar.'}],
+  obs:'A partir de 2 anos (0,03%). Proteger do sol.',fonte:'Bula Protopic (Anvisa)'}]},
+
 ];
 const MED = Object.fromEntries(MEDS.map(m=>[m.id,m]));
-const GRUPOS = ['Todos','Meus','Febre e dor','Antibióticos','Respiratório','Alergia','Gastro','Olhos','Ouvido','Pele','Outros','TEA / TDAH'];
+const GRUPOS = ['Todos','Meus','Febre e dor','Antibióticos','Respiratório','Alergia','Gastro','Olhos','Ouvido','Pele','Outros','TEA / TDAH','Saúde mental'];
 /* nomes comerciais escolhíveis (sem "genérico", "manipulado", etc.) */
 function marcas(m, ap){
   const todas = m.comerciais.filter(c=>!/gen[eé]rico|manipulad|suplemento|SUS/i.test(c)).map(c=>c.replace(/\s*\(.*\)\s*$/,''));
@@ -918,6 +1076,10 @@ function calc(it, peso){
     if(v*ap.conc>cap+1e-9) v=+(v-step).toFixed(2);
     if(v<=0){ r.ok=false; r.avisos.push({t:'Dose muito pequena para esta apresentação.',danger:true}); }
     qtd=v; real=v*ap.conc; qtdTxt=`${fmt(v)} mL`;
+  } else if(ap.forma==='mg'){
+    const passo=ap.passo||10; let v=Math.round(dose/passo)*passo;
+    if(v>cap+1e-9) v=Math.floor(cap/passo)*passo;
+    qtd=v; real=v; qtdTxt=`${fmt(v)} ${med.un}`;
   } else if(ap.forma==='gotas'){
     const porGota=ap.conc/ap.gotasMl;
     let g=Math.round(dose/porGota);
@@ -931,7 +1093,7 @@ function calc(it, peso){
     qtd=n; real=n*ap.conc; qtdTxt=unidTxt(n, ap.un);
   }
   r.qtd=qtd; r.real=real; r.dosesDia=unica?1:dosesDia; r.qtdTxt=qtdTxt;
-  if(r.alvo && real>0 && Math.abs(real-dose)/dose>0.1) r.avisos.push({t:`O arredondamento mudou a dose em ${fmt(Math.abs(real-dose)/dose*100,0)}%.`});
+  if(real>0 && dose>0 && Math.abs(real-dose)/dose>0.1) r.avisos.push({t:`O arredondamento mudou a dose em ${fmt(Math.abs(real-dose)/dose*100,0)}%.`});
   if(peso && real>0){ r.porKg=real/peso; r.porKgDia=real*r.dosesDia/peso; }
 
   // posologia
@@ -946,13 +1108,14 @@ function calc(it, peso){
   // quantidade a dispensar
   const diasConta = ind.continuo ? (it.dias ?? ind.diasQtd) : dias;
   const doses = unica ? 1 : (ind.cond || !diasConta ? null : dosesDia*diasConta);
-  if(!doses || qtd<=0) r.qtdTotal = ap.frascos ? `1 frasco ${ap.frascos[0].t}` : ap.emb ? `1 ${ap.emb[0]}` : ap.forma==='unid' && ap.un!=='jato' ? '1 caixa' : '1 frasco';
+  if(!doses || qtd<=0) r.qtdTotal = ap.forma==='mg' ? '1 frasco-ampola' : ap.frascos ? `1 frasco ${ap.frascos[0].t}` : ap.emb ? `1 ${ap.emb[0]}` : ap.forma==='unid' && ap.un!=='jato' ? '1 caixa' : '1 frasco';
   else if(ap.frascos && (ap.forma==='liquido'||ap.forma==='gotas')){ const tot = ap.forma==='gotas' ? qtd*doses/ap.gotasMl : qtd*doses;
     const folga = tot*1.1; // 10% de margem para perdas na seringa/frasco
     const f = ap.frascos.find(x=>x.ml>=folga); const max=ap.frascos[ap.frascos.length-1];
     r.qtdTotal = f ? `1 frasco ${f.t}` : `${Math.ceil(folga/max.ml)} frascos ${max.t}`; r.totalTxt=`${fmt(tot,1)} mL no total`; }
   else if(ap.forma==='liquido'){ const tot=qtd*doses, fr=Math.max(1,Math.ceil(tot/ap.frasco-1e-9)); r.qtdTotal= ap.emb ? `${fr} ${ap.emb[fr>1?1:0]}` : `${fr} ${fr>1?'frascos':'frasco'} (${ap.frasco} mL)`; r.totalTxt=`${fmt(tot,1)} mL no total`; }
   else if(ap.forma==='gotas'){ const tot=qtd*doses/ap.gotasMl, fr=Math.max(1,Math.ceil(tot/ap.frasco-1e-9)); r.qtdTotal=`${fr} ${fr>1?'frascos':'frasco'} (${ap.frasco} mL)`; r.totalTxt=`${fmt(tot,1)} mL no total`; }
+  else if(ap.forma==='mg'){ const fr=Math.max(1,Math.ceil(qtd*doses/ap.conc-1e-9)); r.qtdTotal=`${fr} ${fr>1?'frascos-ampola':'frasco-ampola'}`; }
   else if(ap.un==='jato'){ const tot=qtd*doses, fr=Math.max(1,Math.ceil(tot/ap.frasco-1e-9)); r.qtdTotal=`${fr} ${fr>1?'frascos':'frasco'}`; r.totalTxt=`${tot} jatos no total`; }
   else { const tot=Math.ceil(qtd*doses-1e-9); r.qtdTotal=`${tot} ${plural(tot,ap.un)}`; }
   return r;
