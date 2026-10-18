@@ -1,7 +1,5 @@
 [build]
   publish = "."
-  # gera config.js com as chaves cadastradas no painel da Netlify (não ficam no Git)
-  command = "printf 'window.CONFIG={url:\"%s\",key:\"%s\"};' \"$SUPABASE_URL\" \"$SUPABASE_ANON_KEY\" > config.js"
 
 [[headers]]
   for = "/*"
