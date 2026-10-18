@@ -1,0 +1,1245 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<title>Receituário Rápido</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: bancada de trabalho em duas colunas — à esquerda o montador do item, à direita a folha de receita que se preenche. No celular, empilha. */
+:root{
+  --bg:#eef3f1; --surface:#ffffff; --surface-2:#f6f9f8; --line:#d5e0dc;
+  --fg:#15302a; --muted:#5b726b;
+  --accent:#0b6b58; --accent-ink:#ffffff; --accent-soft:#dcefe9;
+  --mark:#ffe58a; --mark-ink:#3d3000;
+  --warn:#9a5b00; --warn-bg:#fff3dc; --danger:#a3271c; --danger-bg:#fde6e3;
+  --ctrlA:#8a6a00; --ctrlA-bg:#fff4c2; --ctrlC:#5b3c99; --ctrlC-bg:#ece4fb;
+  --paper:#fffef9; --paper-line:#e9efe9;
+  --f-display:"Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1816; --surface:#16211e; --surface-2:#1b2825; --line:#2a3b37;
+  --fg:#e3eeea; --muted:#94aaa3;
+  --accent:#4cc3a6; --accent-ink:#06231c; --accent-soft:#163a32;
+  --mark:#5a4a12; --mark-ink:#ffeeb0;
+  --warn:#f0b65a; --warn-bg:#3a2b10; --danger:#ff8f82; --danger-bg:#3d1714;
+  --ctrlA:#f2cf55; --ctrlA-bg:#3a3110; --ctrlC:#c7b0ff; --ctrlC-bg:#2a2140;
+  --paper:#1a2421; --paper-line:#24322e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1816; --surface:#16211e; --surface-2:#1b2825; --line:#2a3b37;
+  --fg:#e3eeea; --muted:#94aaa3;
+  --accent:#4cc3a6; --accent-ink:#06231c; --accent-soft:#163a32;
+  --mark:#5a4a12; --mark-ink:#ffeeb0;
+  --warn:#f0b65a; --warn-bg:#3a2b10; --danger:#ff8f82; --danger-bg:#3d1714;
+  --ctrlA:#f2cf55; --ctrlA-bg:#3a3110; --ctrlC:#c7b0ff; --ctrlC-bg:#2a2140;
+  --paper:#1a2421; --paper-line:#24322e; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 96px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:20px 12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .rx{font-family:var(--f-display);font-weight:700;font-size:22px;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink)}
+.brand h1{font-size:22px}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+nav.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+nav.tabs button{border:0;background:transparent;padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);color:var(--warn);border-radius:var(--r);padding:10px 14px;font-size:14px;margin-bottom:16px}
+.banner strong{color:inherit}
+.banner.ok{background:var(--accent-soft);color:var(--fg)}
+.addcustom{margin-top:8px;width:100%;border:1.5px dashed var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:9px;font-weight:700;cursor:pointer}
+.b-meu{background:var(--accent-soft);color:var(--accent)}
+
+.weight{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px}
+.weight label{font-family:var(--f-display);font-weight:600;font-size:18px}
+.weight .field{display:flex;align-items:baseline;gap:6px}
+.weight input{width:110px;font-family:var(--f-mono);font-size:28px;font-weight:600;padding:4px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface-2);text-align:right}
+.weight input:focus{border-color:var(--accent)}
+.weight .kg{font-family:var(--f-mono);font-size:18px;color:var(--muted)}
+.weight .hint{color:var(--muted);font-size:13px;flex:1 1 220px;min-width:0}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel h2{font-size:18px;margin-bottom:10px}
+
+.search{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.search:focus{border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-block:10px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg);font-weight:600}
+.medlist{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.medlist button{display:flex;width:100%;text-align:left;gap:10px;align-items:center;justify-content:space-between;border:0;border-bottom:1px solid var(--line);background:transparent;padding:9px 12px;cursor:pointer}
+.medlist button:last-child{border-bottom:0}
+.medlist button:hover{background:var(--accent-soft)}
+.medlist button[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.medlist .nm{font-weight:600}
+.medlist .cm{display:block;font-size:12px;color:var(--muted)}
+.medlist .empty{padding:14px;color:var(--muted)}
+.badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.b-A{background:var(--ctrlA-bg);color:var(--ctrlA)}
+.b-C1{background:var(--ctrlC-bg);color:var(--ctrlC)}
+.b-rev{background:var(--warn-bg);color:var(--warn)}
+.b-ok{background:var(--accent-soft);color:var(--accent)}
+.b-fix{background:var(--danger-bg);color:var(--danger)}
+.revbox{display:grid;gap:6px;min-width:190px}
+.revbox .seg button{padding:4px 8px;font-size:13px}
+.revbox .seg button.ok[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.revbox .seg button.fix[aria-pressed="true"]{border-color:var(--danger);background:var(--danger-bg);color:var(--danger)}
+.revbox textarea{width:100%;min-height:52px;resize:vertical;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.progress{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden;flex:1 1 160px;min-width:120px;max-width:320px}
+.bar i{display:block;height:100%;background:var(--accent)}
+
+.config{margin-top:16px;border-top:1px dashed var(--line);padding-top:16px;display:grid;gap:14px}
+.config .head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+.config .head h3{font-size:22px}
+.config .head .cm{color:var(--muted);font-size:13px;width:100%}
+.row{display:grid;gap:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;text-align:left}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+select,.inp{padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface-2);max-width:100%}
+.inline{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.inline .row{flex:0 1 auto}
+.inp.small{width:96px;font-family:var(--f-mono)}
+.ref{font-size:12px;color:var(--muted)}
+.guide{background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:14px}
+.guide ul{margin:6px 0 0;padding-left:18px}
+
+.result{border-radius:var(--r);padding:14px 16px;background:var(--surface-2);border:1.5px solid var(--accent)}
+.result .big{font-size:20px;font-weight:600;line-height:1.35}
+.result .big mark{background:var(--mark);color:var(--mark-ink);padding:0 4px;border-radius:4px;font-family:var(--f-mono)}
+.result .eq{margin-top:4px;color:var(--muted);font-size:13px}
+.result.bad{border-color:var(--danger)}
+.alerts{display:grid;gap:6px;margin-top:10px}
+.alert{font-size:13px;border-radius:6px;padding:6px 10px;background:var(--warn-bg);color:var(--warn)}
+.alert.danger{background:var(--danger-bg);color:var(--danger)}
+.alert.ctrlA{background:var(--ctrlA-bg);color:var(--ctrlA)}
+.alert.ctrlC{background:var(--ctrlC-bg);color:var(--ctrlC)}
+.meta{font-size:13px;color:var(--muted);display:grid;gap:4px}
+.meta b{color:var(--fg);font-weight:600}
+
+.btn{border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn.link{background:transparent;color:var(--muted);padding:6px 8px;font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* folha de receita */
+.sheet{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 12px)}
+@media (max-width:900px){.sheet{position:static}}
+.items{display:grid;gap:8px;margin-bottom:12px}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.item .n{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.item .t{font-weight:600}
+.item .p{font-size:13px;color:var(--muted)}
+.item .tools{display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.item .tools button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;font-weight:600}
+.item .tools button:hover{color:var(--accent)}
+.item.ctrl{border-color:var(--ctrlC)}
+.paper{width:100%;min-height:260px;resize:vertical;font:13.5px/1.75 var(--f-mono);padding:14px 16px;border:1px solid var(--line);border-radius:8px;
+  background-color:var(--paper);background-image:repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.75em - 1px), var(--paper-line) calc(1.75em - 1px), var(--paper-line) 1.75em);background-attachment:local;background-position:0 14px}
+.sheet .foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:10px}
+.toast{font-size:13px;color:var(--accent);font-weight:600;min-height:1.2em}
+.emptybox{color:var(--muted);font-size:14px;padding:14px;border:1px dashed var(--line);border-radius:8px;text-align:center}
+
+/* revisão */
+.review .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:1180px;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{position:sticky;top:0;background:var(--surface-2);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+td.med{font-weight:600;white-space:nowrap}
+td small{color:var(--muted)}
+tbody tr:nth-child(even) td{background:var(--surface-2)}
+
+.login{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg);padding:16px}
+.login form{width:min(380px,100%);display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+.login h1{font-size:24px}
+.login .inp{width:100%}
+.login .erro{color:var(--danger);font-size:14px;min-height:1.2em}
+.mobilebar{display:none}
+@media (max-width:900px){
+  .mobilebar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;gap:10px;align-items:center;justify-content:space-between;
+    background:var(--surface);border-top:1px solid var(--line);
+    padding:10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}
+}
+@media (prefers-reduced-motion:no-preference){.btn,.chip,.seg button{transition:background .15s, border-color .15s}}
+</style>
+
+</head>
+<body>
+<div class="login" id="login">
+  <form id="login-form" autocomplete="on">
+    <div class="brand"><div class="rx" aria-hidden="true">℞</div><div><h1>Receituário Rápido</h1><p>Uso exclusivo da Dra. Anna</p></div></div>
+    <label class="label" for="lg-email">E-mail</label><input id="lg-email" class="inp" type="email" autocomplete="username" required>
+    <label class="label" for="lg-senha">Senha</label><input id="lg-senha" class="inp" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="lg-btn">Entrar</button>
+    <div class="erro" id="lg-erro" role="alert"></div>
+    <p class="ref" style="margin:0">Em computador compartilhado, toque em “Sair” ao terminar. A página sai sozinha após 30 minutos sem uso.</p>
+  </form>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="rx" aria-hidden="true">℞</div>
+      <div><h1>Receituário Rápido</h1><p>Pediatria · cálculo pelo peso · copiar e colar</p></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button id="tab-rx" role="tab" aria-selected="true" aria-controls="view-rx">Montar receita</button>
+      <button id="tab-rev" role="tab" aria-selected="false" aria-controls="view-rev">Revisão das doses</button>
+      <button id="sair" class="btn link" type="button">Sair</button>
+    </nav>
+  </header>
+
+  <div class="banner ok" role="note">
+    <span aria-hidden="true">✓</span>
+    <div>Doses revisadas pela Dra. Anna em 18/10/2026. Itens novos aparecem como <strong>não revisado</strong> até serem conferidos na aba Revisão. Confira sempre a dose antes de prescrever.</div>
+  </div>
+
+  <section id="view-rx" role="tabpanel" aria-labelledby="tab-rx">
+    <div class="weight">
+      <label for="peso">Peso da criança</label>
+      <div class="field"><input id="peso" class="num" type="number" inputmode="decimal" min="0.5" max="150" step="0.1" placeholder="0"><span class="kg">kg</span></div>
+      <div class="hint">Vale para a receita toda. Ao mudar o peso, todos os itens são recalculados.</div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Adicionar medicamento</h2>
+        <input id="busca" class="search" type="search" placeholder="Buscar pelo nome ou nome comercial (ex.: amox, Clavulin, Ritalina)" autocomplete="off">
+        <div class="chips" id="grupos"></div>
+        <div class="medlist" id="lista" role="listbox" aria-label="Medicamentos"></div>
+        <button class="addcustom" id="novo-custom">+ Medicamento não listado</button>
+        <div id="config"></div>
+      </div>
+
+      <aside class="panel sheet" aria-labelledby="h-receita">
+        <h2 id="h-receita">Receita</h2>
+        <div class="items" id="itens"></div>
+        <label class="label" for="texto">Texto para colar no sistema</label>
+        <textarea id="texto" class="paper" spellcheck="false"></textarea>
+        <div class="foot">
+          <span class="toast" id="toast" role="status"></span>
+          <div class="actions">
+            <button class="btn link" id="limpar">Limpar receita</button>
+            <button class="btn" id="copiar">Copiar receita</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="view-rev" class="review" role="tabpanel" aria-labelledby="tab-rev" hidden>
+    <div class="panel" style="margin-bottom:12px">
+      <h2>Revisão das doses</h2>
+      <p style="margin:0 0 10px;max-width:70ch">Confira cada medicamento e marque <b>OK</b> ou <b>Corrigir</b>. Em “Corrigir”, escreva o que mudar (por exemplo: “OMA: 7 dias de 2 a 5 anos”). Sua revisão fica salva aqui e eu consigo ler depois para fazer as correções.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><i id="rev-bar" style="width:0"></i></div><span class="ref" id="rev-prog">Carregando revisão…</span></div>
+    </div>
+    <div class="filters"><input id="busca-rev" class="search" style="max-width:340px" type="search" placeholder="Filtrar a tabela">
+      <div class="seg" role="group" aria-label="Mostrar" id="rev-filtro"><button data-f="todos" aria-pressed="true">Todos</button><button data-f="pend" aria-pressed="false">Pendentes</button><button data-f="fix" aria-pressed="false">A corrigir</button><button data-f="ok" aria-pressed="false">OK</button></div>
+      <span class="ref" id="contagem"></span></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Sua revisão</th><th>Medicamento</th><th>Nomes comerciais</th><th>Apresentações</th><th>Indicação e dose</th><th>Máximo</th><th>Intervalo / duração</th><th>Observações</th><th>Fonte</th></tr></thead>
+      <tbody id="tabela"></tbody>
+    </table></div>
+  </section>
+</div>
+
+<div class="mobilebar"><span id="mb-count" class="label">Receita vazia</span><button class="btn" id="copiar-m">Copiar receita</button></div>
+
+<script>
+/* ===================== DADOS (não revisados) =====================
+   un: unidade da dose · conc: un por mL (liquido/gotas) ou por unidade (unid)
+   modos: kg (mg/kg) · faixa (dose fixa por faixa) · livre (titulação) · opcoes (texto pronto) */
+const H = h => `de ${h} em ${h} horas`;
+const MEDS = [
+// ---------- Febre e dor ----------
+{id:'paracetamol', nome:'Paracetamol', grupo:'Febre e dor', comerciais:['Tylenol','Dôrico','Pacemol','genérico'], un:'mg',
+ apres:[
+  {id:'g',label:'200 mg/mL gotas',forma:'gotas',conc:200,gotasMl:20,frasco:15,via:'oral'},
+  {id:'s',label:'32 mg/mL suspensão oral',forma:'liquido',conc:32,frasco:60,via:'oral'},
+  {id:'c',label:'500 mg comprimido',forma:'unid',conc:500,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'f',label:'Febre ou dor',modo:'kg',base:'dose',min:10,max:15,padrao:10,maxDose:700,maxDia:3750,intervalo:6,cond:'se febre ou dor',
+  obs:'Bula: 1 gota/kg (10 mg/kg) até 35 gotas por dose; no máximo 5 doses em 24 h. Não passar de 75 mg/kg/dia.',fonte:'Bula Tylenol (Anvisa); SBP'}]},
+{id:'dipirona', nome:'Dipirona', grupo:'Febre e dor', comerciais:['Novalgina','Anador','Magnopyrol','genérico'], un:'mg',
+ apres:[
+  {id:'g',label:'500 mg/mL gotas',forma:'gotas',conc:500,gotasMl:20,frasco:20,via:'oral'},
+  {id:'s',label:'50 mg/mL solução oral',forma:'liquido',conc:50,frasco:100,via:'oral'},
+  {id:'c',label:'500 mg comprimido',forma:'unid',conc:500,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'f',label:'Febre ou dor',modo:'kg',base:'dose',min:10,max:25,padrao:15,maxDose:1000,intervalo:6,cond:'se febre ou dor',
+  obs:'Evitar em menores de 3 meses ou com menos de 5 kg. Risco raro de agranulocitose.',fonte:'Bula Novalgina (Anvisa)'}]},
+{id:'ibuprofeno', nome:'Ibuprofeno', grupo:'Febre e dor', comerciais:['Alivium','Advil','Buscofem','genérico'], un:'mg',
+ apres:[
+  {id:'g',label:'100 mg/mL gotas',forma:'gotas',conc:100,gotasMl:20,frasco:20,via:'oral',conferir:'Confirmar nº de gotas/mL da marca (Alivium 100 mg/mL: 1 gota = 5 mg).'},
+  {id:'s',label:'20 mg/mL (100 mg/5 mL) suspensão oral',forma:'liquido',conc:20,frasco:100,via:'oral'},
+  {id:'c',label:'400 mg comprimido',forma:'unid',conc:400,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'f',label:'Febre ou dor',modo:'kg',base:'dose',min:5,max:10,padrao:10,maxDose:400,maxDia:1200,intervalo:8,cond:'se febre ou dor',
+  obs:'A partir de 6 meses. Evitar se desidratação, varicela ou dengue suspeita.',fonte:'Bula Alivium (Anvisa); BNF for Children'}]},
+
+// ---------- Antibióticos ----------
+{id:'amoxicilina', nome:'Amoxicilina', grupo:'Antibióticos', comerciais:['Amoxil','Novocilin','Velamox','genérico'], un:'mg',
+ apres:[
+  {id:'s250',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:150,via:'oral'},
+  {id:'s400',label:'400 mg/5 mL suspensão oral',forma:'liquido',conc:80,frasco:100,via:'oral'},
+  {id:'c500',label:'500 mg cápsula',forma:'unid',conc:500,un:'cápsula',frac:false,via:'oral'}],
+ ind:[
+  {id:'oma',label:'Otite média aguda / sinusite (dose alta)',modo:'kg',base:'dia',min:80,max:90,padrao:90,maxDia:3000,intervalo:12,dias:10,
+   obs:'Duração AAP: 10 dias se < 2 anos ou caso grave; 7 dias de 2 a 5 anos; 5 a 7 dias se ≥ 6 anos.',fonte:'AAP 2013 (OMA); SBP'},
+  {id:'far',label:'Faringoamigdalite estreptocócica',modo:'kg',base:'dia',min:50,max:50,padrao:50,maxDia:1000,intervalo:12,dias:10,
+   obs:'Alternativa: 50 mg/kg 1 vez ao dia (máx. 1 g).',fonte:'IDSA 2012; AHA 2009'},
+  {id:'pac',label:'Pneumonia adquirida na comunidade',modo:'kg',base:'dia',min:50,max:90,padrao:50,maxDia:4000,intervalo:8,dias:7,
+   obs:'SBP: 50 mg/kg/dia de 8/8 h. IDSA: 90 mg/kg/dia onde há pneumococo resistente. Cursos de 5 dias podem bastar em casos leves.',fonte:'SBP; IDSA 2011'},
+  {id:'ger',label:'Outras infecções (dose padrão)',modo:'kg',base:'dia',min:25,max:50,padrao:50,maxDose:500,intervalo:8,dias:7,fonte:'Bula Amoxil (Anvisa)'}]},
+{id:'amoxclav', nome:'Amoxicilina + clavulanato', grupo:'Antibióticos', comerciais:['Clavulin BD','Novamox 2x','Sigma-Clav BD','genérico'], un:'mg de amoxicilina',
+ apres:[
+  {id:'bd',label:'400 mg + 57 mg/5 mL suspensão oral (BD)',forma:'liquido',conc:80,frasco:70,via:'oral'},
+  {id:'c875',label:'875 mg + 125 mg comprimido',forma:'unid',conc:875,un:'comprimido',frac:false,via:'oral'}],
+ ind:[
+  {id:'pad',label:'Dose padrão',modo:'kg',base:'dia',min:25,max:45,padrao:45,maxDose:875,intervalo:12,dias:10,fonte:'Bula Clavulin BD (Anvisa)'},
+  {id:'alta',label:'OMA / sinusite com falha (dose alta)',modo:'kg',base:'dia',min:80,max:90,padrao:90,maxDia:3000,intervalo:12,dias:10,
+   obs:'Com a apresentação BD, a dose de clavulanato sobe e aumenta a diarreia. Se disponível, prefira a formulação ES (600 mg + 42,9 mg/5 mL).',fonte:'AAP 2013'}]},
+{id:'azitro', nome:'Azitromicina', grupo:'Antibióticos', comerciais:['Zitromax','Astro','Azi','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'200 mg/5 mL suspensão oral',forma:'liquido',conc:40,frasco:15,frascos:[{ml:15,t:'de 600 mg (15 mL)'},{ml:22.5,t:'de 900 mg (22,5 mL)'},{ml:37.5,t:'de 1.500 mg (37,5 mL)'}],via:'oral'},
+  {id:'c',label:'500 mg comprimido',forma:'unid',conc:500,un:'comprimido',frac:false,via:'oral'}],
+ ind:[
+  {id:'ger',label:'Esquema de 3 dias (geral)',modo:'kg',base:'dose',min:10,max:10,padrao:10,maxDose:500,freq:'1 vez ao dia',dosesDia:1,dias:3,
+   obs:'Pneumonia atípica (esquema de 5 dias): 10 mg/kg no 1º dia e 5 mg/kg do 2º ao 5º dia. Editar o texto se usar esse esquema.',fonte:'Bula Zitromax (Anvisa); IDSA 2011'},
+  {id:'far',label:'Faringite estreptocócica (alergia à penicilina)',modo:'kg',base:'dose',min:12,max:12,padrao:12,maxDose:500,freq:'1 vez ao dia',dosesDia:1,dias:5,fonte:'IDSA 2012'}]},
+{id:'cefalexina', nome:'Cefalexina', grupo:'Antibióticos', comerciais:['Keflex','Keflex gotas','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:100,via:'oral'},
+  {id:'g',label:'100 mg/mL gotas',forma:'gotas',conc:100,gotasMl:22,frasco:15,frascos:[{ml:15,t:'de 15 mL'},{ml:30,t:'de 30 mL'}],via:'oral',conferir:'Keflex gotas: 1 mL ≈ 22 gotas (1 gota ≈ 4,5 mg).'},
+  {id:'c',label:'500 mg cápsula',forma:'unid',conc:500,un:'cápsula',frac:false,via:'oral'}],
+ ind:[
+  {id:'pele',label:'Pele e partes moles / ITU',modo:'kg',base:'dia',min:25,max:100,padrao:50,maxDose:1000,intervalo:6,dias:7,fonte:'Bula Keflex (Anvisa); BNF for Children'},
+  {id:'far',label:'Faringite (alergia não grave à penicilina)',modo:'kg',base:'dose',min:20,max:20,padrao:20,maxDose:500,intervalo:12,dias:10,fonte:'IDSA 2012'}]},
+{id:'cefuroxima', nome:'Cefuroxima', grupo:'Antibióticos', comerciais:['Zinnat','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:50,via:'oral'},
+  {id:'c250',label:'250 mg comprimido',forma:'unid',conc:250,un:'comprimido',frac:false,via:'oral'},
+  {id:'c500',label:'500 mg comprimido',forma:'unid',conc:500,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'ger',label:'OMA / sinusite / outras',modo:'kg',base:'dia',min:20,max:30,padrao:30,maxDose:500,intervalo:12,dias:10,fonte:'Bula Zinnat (Anvisa); AAP 2013'}]},
+{id:'cefdinir', nome:'Cefdinir', grupo:'Antibióticos', comerciais:['Terza','Tercen'], un:'mg',
+ apres:[{id:'s',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:100,via:'oral'}],
+ ind:[
+  {id:'12h',label:'OMA / sinusite / faringite / pele – 12/12 h',modo:'kg',base:'dia',min:14,max:14,padrao:14,maxDia:600,intervalo:12,dias:10,
+   obs:'A partir de 6 meses. OMA: 5 a 10 dias. Na infecção de pele, usar só de 12/12 h. ≥ 43 kg: 600 mg/dia.',fonte:'Bula Terza/Tercen (Anvisa)'},
+  {id:'24h',label:'OMA / sinusite / faringite – 1 vez ao dia',modo:'kg',base:'dia',min:14,max:14,padrao:14,maxDia:600,freq:'1 vez ao dia',dosesDia:1,dias:10,
+   obs:'Não usar dose única diária em infecção de pele.',fonte:'Bula Terza/Tercen (Anvisa)'}]},
+{id:'cefaclor', nome:'Cefaclor', grupo:'Antibióticos', comerciais:['Ceclor','Ceclor AF','genérico'], un:'mg',
+ apres:[
+  {id:'s250',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:100,frascos:[{ml:80,t:'de 80 mL'},{ml:100,t:'de 100 mL'}],via:'oral'},
+  {id:'s375',label:'375 mg/5 mL suspensão oral',forma:'liquido',conc:75,frasco:100,frascos:[{ml:80,t:'de 80 mL'},{ml:100,t:'de 100 mL'}],via:'oral'}],
+ ind:[
+  {id:'oma8',label:'OMA / infecções mais graves – 8/8 h (250 mg/5 mL)',modo:'kg',base:'dia',min:20,max:40,padrao:40,maxDia:1000,intervalo:8,dias:10,
+   obs:'Dose habitual 20 mg/kg/dia; 40 mg/kg/dia na otite média e infecções mais graves. A partir de 1 mês.',fonte:'Bula Ceclor (EMS)'},
+  {id:'oma12',label:'OMA / faringite – 12/12 h (375 mg/5 mL)',modo:'kg',base:'dia',min:20,max:40,padrao:40,maxDia:1000,intervalo:12,dias:10,
+   obs:'Esquema de 12/12 h indicado para otite média e faringite.',fonte:'Bula Ceclor (EMS)'}]},
+{id:'claritro', nome:'Claritromicina', grupo:'Antibióticos', comerciais:['Klaricid','Klaricid UD','genérico'], un:'mg',
+ apres:[
+  {id:'s125',label:'125 mg/5 mL suspensão oral',forma:'liquido',conc:25,frasco:60,via:'oral'},
+  {id:'s250',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:60,via:'oral'},
+  {id:'c500',label:'500 mg comprimido',forma:'unid',conc:500,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'ger',label:'Infecções respiratórias / OMA (alergia à penicilina)',modo:'kg',base:'dia',min:15,max:15,padrao:15,maxDose:500,intervalo:12,dias:10,
+  obs:'Pneumonia atípica: 7 a 10 dias. Muitas interações (via CYP3A4).',fonte:'Bula Klaricid (Anvisa); AAP Red Book'}]},
+{id:'cefadro', nome:'Cefadroxila', grupo:'Antibióticos', comerciais:['Cefamox','genérico'], un:'mg',
+ apres:[
+  {id:'s250',label:'250 mg/5 mL suspensão oral',forma:'liquido',conc:50,frasco:100,via:'oral'},
+  {id:'s500',label:'500 mg/5 mL suspensão oral',forma:'liquido',conc:100,frasco:100,via:'oral'},
+  {id:'c500',label:'500 mg cápsula',forma:'unid',conc:500,un:'cápsula',frac:false,via:'oral'}],
+ ind:[
+  {id:'pele',label:'Pele e partes moles / ITU',modo:'kg',base:'dia',min:30,max:30,padrao:30,maxDia:2000,intervalo:12,dias:7,fonte:'Bula Cefamox (Anvisa)'},
+  {id:'far',label:'Faringoamigdalite estreptocócica',modo:'kg',base:'dia',min:30,max:30,padrao:30,maxDia:1000,freq:'1 vez ao dia',dosesDia:1,dias:10,fonte:'IDSA 2012; bula Cefamox'}]},
+{id:'benzatina', nome:'Penicilina G benzatina', grupo:'Antibióticos', comerciais:['Benzetacil','genérico'], un:'',
+ apres:[{id:'f',label:'pó para suspensão injetável (frasco-ampola)',forma:'unid',conc:1,un:'frasco-ampola',via:'intramuscular'}],
+ ind:[{id:'far',label:'Faringoamigdalite estreptocócica',modo:'opcoes',qtdPadrao:'1 frasco-ampola',
+  opcoes:[{label:'< 27 kg: 600.000 UI IM dose única',texto:'Aplicar 600.000 UI via intramuscular profunda, em dose única.'},{label:'≥ 27 kg: 1.200.000 UI IM dose única',texto:'Aplicar 1.200.000 UI via intramuscular profunda, em dose única.'}],
+  obs:'Aplicar em serviço de saúde com estrutura para anafilaxia. Também usada na profilaxia da febre reumática.',fonte:'AHA 2009; Ministério da Saúde'}]},
+{id:'smxtmp', nome:'Sulfametoxazol + trimetoprima', grupo:'Antibióticos', comerciais:['Bactrim','Infectrin','genérico'], un:'mg de trimetoprima',
+ apres:[
+  {id:'s',label:'(200 mg + 40 mg)/5 mL suspensão oral',forma:'liquido',conc:8,frasco:100,via:'oral'},
+  {id:'c',label:'400 mg + 80 mg comprimido',forma:'unid',conc:80,un:'comprimido',frac:true,via:'oral'},
+  {id:'cf',label:'800 mg + 160 mg comprimido (F)',forma:'unid',conc:160,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'itu',label:'Infecção urinária',modo:'kg',base:'dia',min:6,max:12,padrao:8,maxDose:160,intervalo:12,dias:10,
+  obs:'Dose calculada pela trimetoprima. Contraindicado em menores de 2 meses.',fonte:'AAP 2011 (ITU); bula Bactrim (Anvisa)'}]},
+
+// ---------- Respiratório ----------
+{id:'salbspray', nome:'Salbutamol spray', rx:'Salbutamol', grupo:'Respiratório', comerciais:['Aerolin spray','Aerojet','genérico'], un:'mcg',
+ apres:[{id:'sp',label:'100 mcg/jato aerossol',forma:'unid',conc:100,un:'jato',frac:false,frasco:200,via:'inalatório',verbo:'Fazer',viaTxt:'com espaçador'}],
+ ind:[{id:'crise',label:'Chiado / crise leve (alívio)',modo:'kg',base:'dose',min:33,max:50,padrao:33,minDose:200,maxDose:1000,intervalo:4,cond:'se tosse, chiado ou falta de ar',
+  obs:'Referência: 1 jato a cada 2 a 3 kg, mínimo 2 e máximo 10 jatos. Na crise, pode repetir a cada 20 min na 1ª hora (até 3 vezes) e procurar atendimento se não melhorar. Usar máscara no espaçador se < 4 anos.',fonte:'GINA 2024; SBP'}]},
+{id:'salbneb', nome:'Salbutamol para nebulização', rx:'Salbutamol', grupo:'Respiratório', comerciais:['Aerolin solução para nebulização','genérico'], un:'mg',
+ apres:[{id:'g',label:'5 mg/mL solução para nebulização',forma:'gotas',conc:5,gotasMl:20,frasco:10,via:'inalatório',verbo:'Fazer nebulização com',viaTxt:'diluídas em 3 mL de soro fisiológico 0,9%'}],
+ ind:[{id:'crise',label:'Chiado / crise leve',modo:'kg',base:'dose',min:0.1,max:0.15,padrao:0.15,minDose:1.25,maxDose:5,intervalo:4,cond:'se chiado ou falta de ar',
+  obs:'Spray com espaçador é preferível à nebulização. 1 gota = 0,25 mg.',fonte:'GINA 2024; bula Aerolin (Anvisa)'}]},
+{id:'prednisolona', nome:'Prednisolona', grupo:'Respiratório', comerciais:['Predsim','Prelone','genérico'], un:'mg',
+ apres:[
+  {id:'s3',label:'3 mg/mL solução oral',forma:'liquido',conc:3,frasco:60,via:'oral'},
+  {id:'s1',label:'1 mg/mL solução oral',forma:'liquido',conc:1,frasco:120,via:'oral'},
+  {id:'c5',label:'5 mg comprimido',forma:'unid',conc:5,un:'comprimido',frac:true,via:'oral'},
+  {id:'c20',label:'20 mg comprimido',forma:'unid',conc:20,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'asma',label:'Crise de asma',modo:'kg',base:'dia',min:1,max:2,padrao:1,maxDia:40,freq:'1 vez ao dia pela manhã',dosesDia:1,dias:5,
+  obs:'GINA (< 6 anos): máximo 20 mg/dia até 2 anos e 30 mg/dia de 3 a 5 anos. Cursos de 3 a 5 dias, sem desmame.',fonte:'GINA 2024'}]},
+{id:'beclo', nome:'Beclometasona spray oral', rx:'Beclometasona', grupo:'Respiratório', comerciais:['Clenil HFA','Beclosol','genérico'], un:'mcg',
+ apres:[
+  {id:'50',label:'50 mcg/jato aerossol',forma:'unid',conc:50,un:'jato',frac:false,frasco:200,via:'inalatório',verbo:'Fazer',viaTxt:'com espaçador'},
+  {id:'250',label:'250 mcg/jato aerossol',forma:'unid',conc:250,un:'jato',frac:false,frasco:200,via:'inalatório',verbo:'Fazer',viaTxt:'com espaçador'}],
+ ind:[{id:'ctrl',label:'Controle da asma',modo:'faixa',intervalo:12,continuo:true,diasQtd:30,extra:'Enxaguar a boca após o uso.',
+  faixas:[{label:'Dose baixa – 50 mcg de 12/12 h (100 mcg/dia)',dose:50},{label:'Dose baixa ≥ 6 anos – 100 mcg de 12/12 h (200 mcg/dia)',dose:100},{label:'Dose média – 200 mcg de 12/12 h (400 mcg/dia)',dose:200},{label:'Dose 250 mcg de 12/12 h (adolescentes)',dose:250}],
+  obs:'GINA: dose baixa 100–200 mcg/dia (6 a 11 anos); ≤ 5 anos: 100 mcg/dia.',fonte:'GINA 2024'}]},
+{id:'pulmicort', nome:'Budesonida para nebulização', rx:'Budesonida', grupo:'Respiratório', comerciais:['Pulmicort','genérico'], un:'mg',
+ apres:[
+  {id:'025',label:'0,25 mg/mL suspensão para nebulização (flaconete 2 mL)',forma:'liquido',conc:0.25,frasco:40,emb:['caixa (20 flaconetes)','caixas (20 flaconetes)'],via:'inalatório',verbo:'Fazer nebulização com',viaTxt:'(completar com soro fisiológico 0,9% até 2 a 4 mL)'},
+  {id:'05',label:'0,5 mg/mL suspensão para nebulização (flaconete 2 mL)',forma:'liquido',conc:0.5,frasco:40,emb:['caixa (20 flaconetes)','caixas (20 flaconetes)'],via:'inalatório',verbo:'Fazer nebulização com',viaTxt:'(completar com soro fisiológico 0,9% até 2 a 4 mL)'}],
+ ind:[{id:'ctrl',label:'Asma / sibilância – manutenção',modo:'faixa',faixaPadrao:0,intervalo:12,continuo:true,diasQtd:30,
+  faixas:[{label:'0,25 mg 1 vez ao dia',dose:0.25,t:'1 vez ao dia',d:1},{label:'0,25 mg de 12/12 h (0,5 mg/dia)',dose:0.25},{label:'0,5 mg de 12/12 h (1 mg/dia)',dose:0.5},{label:'1 mg de 12/12 h (2 mg/dia – máximo)',dose:1}],
+  extra:'Usar nebulizador a jato (não ultrassônico). Lavar o rosto e enxaguar a boca após o uso.',
+  obs:'Bula: início 0,25 a 0,5 mg/dia (até 1 mg/dia se dependente de corticoide oral); manutenção 0,25 a 2 mg/dia; dose única diária possível até 1 mg/dia. A partir de 6 meses.',fonte:'Bula Pulmicort (Anvisa)'}]},
+{id:'budenasal', nome:'Budesonida spray nasal', rx:'Budesonida', grupo:'Respiratório', comerciais:['Noex','Busonid nasal','genérico'], un:'mcg',
+ apres:[
+  {id:'32',label:'32 mcg/jato spray nasal',forma:'unid',conc:32,un:'jato',frac:false,frasco:120,via:'nasal'},
+  {id:'64',label:'64 mcg/jato spray nasal',forma:'unid',conc:64,un:'jato',frac:false,frasco:120,via:'nasal'}],
+ ind:[{id:'rin',label:'Rinite alérgica',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'1 jato em cada narina 1 vez ao dia',texto:'Aplicar 1 jato em cada narina 1 vez ao dia, pela manhã.'},{label:'2 jatos em cada narina 1 vez ao dia',texto:'Aplicar 2 jatos em cada narina 1 vez ao dia, pela manhã.'}],
+  obs:'A partir de 6 anos (conferir bula da marca). Máximo 256 mcg/dia.',fonte:'Bula Noex (Anvisa)'}]},
+{id:'sfnasal', nome:'Soro fisiológico nasal / lavagem nasal', rx:'Cloreto de sódio 0,9%', grupo:'Respiratório', comerciais:['Rinosoro','Rinosoro Jet','Maresis','Nasoclean','Sorine (solução fisiológica)'], un:'',
+ apres:[{id:'sp',label:'solução nasal (spray ou gotas)',forma:'unid',conc:1,un:'frasco',via:'nasal'}],
+ ind:[{id:'lav',label:'Higiene / lavagem nasal',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'Jatos várias vezes ao dia',texto:'Aplicar 2 a 3 jatos em cada narina várias vezes ao dia, sempre antes de mamar, comer e dormir.'},{label:'Lavagem com seringa (crianças maiores)',texto:'Fazer lavagem com 5 a 10 mL em cada narina, com seringa, 3 a 4 vezes ao dia.'},{label:'Lavagem de alto volume (frasco de lavagem)',texto:'Fazer lavagem nasal com o frasco de lavagem, aplicando em cada narina 1 a 2 vezes ao dia, de preferência antes do corticoide nasal.'}],fonte:'SBP'}]},
+{id:'filinar', nome:'Acebrofilina', grupo:'Respiratório', comerciais:['Filinar','Brondilat','genérico'], un:'mg',
+ apres:[
+  {id:'p',label:'25 mg/5 mL xarope pediátrico',forma:'liquido',conc:5,frasco:120,via:'oral'},
+  {id:'a',label:'50 mg/5 mL xarope adulto',forma:'liquido',conc:10,frasco:120,via:'oral'}],
+ ind:[
+  {id:'idade',label:'Tosse com secreção (por idade)',modo:'faixa',faixaPadrao:0,intervalo:12,dias:7,
+   faixas:[{label:'3 a 6 anos – 25 mg (5 mL do pediátrico)',dose:25},{label:'6 a 12 anos – 50 mg (10 mL do pediátrico)',dose:50},{label:'> 12 anos – 100 mg (10 mL do adulto)',dose:100}],
+   obs:'Contraindicado em menores de 2 anos. Duração a critério médico.',fonte:'Bula Filinar (Anvisa)'},
+  {id:'kg',label:'2 a 3 anos (pelo peso)',modo:'kg',base:'dia',min:2,max:2,padrao:2,intervalo:12,dias:7,
+   obs:'Contraindicado em menores de 2 anos.',fonte:'Bula Filinar (Anvisa)'}]},
+{id:'aires', nome:'Acetilcisteína', grupo:'Respiratório', comerciais:['Aires','Fluimucil','genérico'], un:'mg',
+ apres:[{id:'x',label:'20 mg/mL xarope pediátrico',forma:'liquido',conc:20,frasco:120,via:'oral',conferir:'Posologia por idade tirada da bula padrão do xarope pediátrico de 20 mg/mL; conferir na bula do Aires.'}],
+ ind:[{id:'idade',label:'Secreção espessa',modo:'faixa',faixaPadrao:1,dias:5,
+  faixas:[{label:'2 a 4 anos – 100 mg (5 mL) de 12/12 h',dose:100,t:H(12),d:2},{label:'2 a 4 anos – 100 mg (5 mL) de 8/8 h',dose:100,t:H(8),d:3},{label:'> 4 anos – 100 mg (5 mL) de 6/6 h',dose:100,t:H(6),d:4}],
+  obs:'Contraindicado em menores de 2 anos (risco de obstrução por secreção).',fonte:'Bula Aires/Fluimucil (Anvisa)'}]},
+
+// ---------- Alergia ----------
+{id:'deslora', nome:'Desloratadina', grupo:'Alergia', comerciais:['Desalex','Esalerg','Esalerg gotas','genérico'], un:'mg',
+ apres:[
+  {id:'x',label:'0,5 mg/mL xarope',forma:'liquido',conc:0.5,frasco:60,via:'oral'},
+  {id:'g',label:'1,25 mg/mL gotas (Esalerg gotas)',forma:'gotas',conc:1.25,gotasMl:20,frasco:20,via:'oral'},
+  {id:'c',label:'5 mg comprimido',forma:'unid',conc:5,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'al',label:'Rinite alérgica / urticária',modo:'faixa',faixaPadrao:1,freq:'1 vez ao dia',dosesDia:1,dias:10,
+  faixas:[{label:'6 a 11 meses – 1 mg',dose:1},{label:'1 a 5 anos – 1,25 mg',dose:1.25},{label:'6 a 11 anos – 2,5 mg',dose:2.5},{label:'≥ 12 anos – 5 mg',dose:5}],fonte:'Bula Desalex (Anvisa)'}]},
+{id:'lora', nome:'Loratadina', grupo:'Alergia', comerciais:['Claritin','genérico'], un:'mg',
+ apres:[
+  {id:'x',label:'1 mg/mL xarope',forma:'liquido',conc:1,frasco:100,via:'oral'},
+  {id:'c',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'al',label:'Rinite alérgica / urticária',modo:'faixa',freq:'1 vez ao dia',dosesDia:1,dias:10,
+  faixas:[{label:'2 a 12 anos e < 30 kg – 5 mg',dose:5,kgMin:0,kgMax:30},{label:'≥ 30 kg ou ≥ 12 anos – 10 mg',dose:10,kgMin:30,kgMax:999}],
+  obs:'A partir de 2 anos.',fonte:'Bula Claritin (Anvisa)'}]},
+{id:'cetiri', nome:'Cetirizina', grupo:'Alergia', comerciais:['Zyrtec','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'1 mg/mL solução oral',forma:'liquido',conc:1,frasco:120,via:'oral'},
+  {id:'g',label:'10 mg/mL gotas',forma:'gotas',conc:10,gotasMl:20,frasco:20,via:'oral',conferir:'Confirmar nº de gotas/mL da marca.'},
+  {id:'c',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'al',label:'Rinite alérgica / urticária',modo:'faixa',dias:10,
+  faixas:[{label:'6 a 23 meses – 2,5 mg 1 vez ao dia',dose:2.5,t:'1 vez ao dia',d:1},{label:'2 a 5 anos – 2,5 mg de 12/12 h',dose:2.5,t:H(12),d:2},{label:'6 a 11 anos – 5 mg de 12/12 h',dose:5,t:H(12),d:2},{label:'≥ 12 anos – 10 mg 1 vez ao dia',dose:10,t:'1 vez ao dia',d:1}],
+  fonte:'Bula Zyrtec (Anvisa)'}]},
+{id:'koided', nome:'Dexclorfeniramina + betametasona', grupo:'Alergia', comerciais:['Koide D','Celestamine','genérico'], un:'mg de dexclorfeniramina',
+ apres:[{id:'x',label:'(2 mg + 0,25 mg)/5 mL xarope',forma:'liquido',conc:0.4,frasco:120,via:'oral'}],
+ ind:[{id:'al',label:'Alergia (quadro agudo)',modo:'faixa',faixaPadrao:1,intervalo:8,dias:5,
+  faixas:[{label:'2 a 6 anos – 1,25 mL de 8/8 h',dose:0.5},{label:'2 a 6 anos – 2,5 mL de 8/8 h',dose:1},{label:'6 a 12 anos – 2,5 mL de 8/8 h (máx. 20 mL/dia)',dose:1},{label:'> 12 anos – 5 mL de 8/8 h (máx. 40 mL/dia)',dose:2}],
+  obs:'Contém corticoide (betametasona): preferir cursos curtos. Contraindicado em menores de 2 anos.',fonte:'Bula Koide D (Anvisa)'}]},
+{id:'hidroxi', nome:'Hidroxizina', grupo:'Alergia', comerciais:['Hixizine','Pergo','genérico'], un:'mg',
+ apres:[
+  {id:'x',label:'2 mg/mL xarope',forma:'liquido',conc:2,frasco:120,via:'oral'},
+  {id:'c',label:'25 mg comprimido',forma:'unid',conc:25,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'pr',label:'Prurido / urticária',modo:'kg',base:'dose',min:0.5,max:1,padrao:0.7,maxDose:25,intervalo:8,dias:5,
+  obs:'Causa sonolência. Evitar em < 6 meses.',fonte:'Bula Hixizine (Anvisa)'}]},
+
+// ---------- Gastro ----------
+{id:'ondan', nome:'Ondansetrona', grupo:'Gastro', comerciais:['Vonau Flash','Nausedron','genérico'], un:'mg',
+ apres:[
+  {id:'c4',label:'4 mg comprimido orodispersível',forma:'unid',conc:4,un:'comprimido',frac:true,via:'oral',verbo:'Dissolver',viaTxt:'na boca (sobre a língua)'},
+  {id:'c8',label:'8 mg comprimido orodispersível',forma:'unid',conc:8,un:'comprimido',frac:false,via:'oral',verbo:'Dissolver',viaTxt:'na boca (sobre a língua)'}],
+ ind:[{id:'vom',label:'Vômitos (gastroenterite)',modo:'faixa',intervalo:8,cond:'se vômitos',
+  faixas:[{label:'8 a 15 kg – 2 mg',dose:2,kgMin:8,kgMax:15},{label:'15 a 30 kg – 4 mg',dose:4,kgMin:15,kgMax:30},{label:'> 30 kg – 8 mg',dose:8,kgMin:30,kgMax:999}],
+  obs:'A partir de 6 meses. Cuidado com QT longo. Meio comprimido orodispersível pode ser impreciso.',fonte:'Freedman, NEJM 2006; bula Vonau Flash (Anvisa)'}]},
+{id:'sro', nome:'Soro de reidratação oral', rx:'Sais para reidratação oral', grupo:'Gastro', comerciais:['SRO do SUS','Hidrafix','Floralyte (pronto para uso)'], un:'',
+ apres:[{id:'env',label:'envelope (para 1 litro)',forma:'unid',conc:1,un:'envelope',via:'oral'}],
+ ind:[{id:'pa',label:'Diarreia – Plano A (OMS)',modo:'opcoes',qtdPadrao:'5 envelopes',
+  opcoes:[
+   {label:'< 2 anos: 50–100 mL após cada evacuação',texto:'Diluir 1 envelope em 1 litro de água filtrada ou fervida (fria). Oferecer 50 a 100 mL após cada evacuação líquida ou vômito, em pequenos goles.'},
+   {label:'2 a 10 anos: 100–200 mL após cada evacuação',texto:'Diluir 1 envelope em 1 litro de água filtrada ou fervida (fria). Oferecer 100 a 200 mL após cada evacuação líquida ou vômito, em pequenos goles.'},
+   {label:'> 10 anos: à vontade',texto:'Diluir 1 envelope em 1 litro de água filtrada ou fervida (fria). Tomar à vontade, após cada evacuação líquida ou vômito.'}],
+  obs:'Usar o soro preparado em até 24 h.',fonte:'OMS; Ministério da Saúde (manejo da diarreia)'}]},
+{id:'simeti', nome:'Simeticona', grupo:'Gastro', comerciais:['Luftal','genérico'], un:'',
+ apres:[{id:'g',label:'75 mg/mL gotas',forma:'gotas',conc:75,gotasMl:15,frasco:15,via:'oral'}],
+ ind:[{id:'col',label:'Gases / cólica',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'Lactentes: 3 a 5 gotas 3x/dia',texto:'Tomar 3 a 5 gotas via oral 3 vezes ao dia, se gases.'},{label:'Até 12 anos: 5 a 10 gotas 3x/dia',texto:'Tomar 5 a 10 gotas via oral 3 vezes ao dia, se gases.'}],fonte:'Bula Luftal (Anvisa)'}]},
+{id:'zinco', nome:'Zinco', rx:'Sulfato de zinco', grupo:'Gastro', comerciais:['genérico / manipulado'], un:'mg de zinco',
+ apres:[{id:'s',label:'4 mg/mL solução oral',forma:'liquido',conc:4,frasco:100,via:'oral',conferir:'Confirmar a concentração disponível (muitas vezes manipulado).'}],
+ ind:[{id:'dia',label:'Diarreia aguda',modo:'faixa',freq:'1 vez ao dia',dosesDia:1,dias:10,
+  faixas:[{label:'< 6 meses – 10 mg/dia',dose:10},{label:'≥ 6 meses – 20 mg/dia',dose:20}],obs:'OMS: 10 a 14 dias.',fonte:'OMS/UNICEF 2004'}]},
+
+// ---------- Outros ----------
+{id:'ferroso', nome:'Sulfato ferroso', grupo:'Outros', comerciais:['Sulfato ferroso (SUS)','Fer-in-Sol','genérico'], un:'mg de ferro',
+ apres:[{id:'g',label:'25 mg/mL de ferro elementar gotas',forma:'gotas',conc:25,gotasMl:20,frasco:30,via:'oral',conferir:'1 gota = 1,25 mg de ferro elementar.'}],
+ ind:[
+  {id:'prof',label:'Profilaxia',modo:'kg',base:'dia',min:1,max:2,padrao:1,maxDia:25,freq:'1 vez ao dia',dosesDia:1,continuo:true,diasQtd:30,
+   obs:'SBP 2021: 1 mg/kg/dia dos 3 aos 24 meses (esquemas variam com peso ao nascer e aleitamento).',fonte:'SBP 2021 (Consenso sobre anemia ferropriva)'},
+  {id:'trat',label:'Tratamento de anemia ferropriva',modo:'kg',base:'dia',min:3,max:5,padrao:3,maxDia:60,freq:'1 vez ao dia',dosesDia:1,dias:90,
+   obs:'Manter 3 a 6 meses; reavaliar hemograma.',fonte:'SBP 2021'}]},
+{id:'ferripoli', nome:'Ferro polimaltosado', grupo:'Outros', comerciais:['Noripurum','Ultrafer','genérico'], un:'mg de ferro',
+ apres:[{id:'g',label:'50 mg/mL de ferro elementar gotas',forma:'gotas',conc:50,gotasMl:20,frasco:30,via:'oral',conferir:'1 gota = 2,5 mg de ferro elementar.'}],
+ ind:[
+  {id:'prof',label:'Profilaxia',modo:'kg',base:'dia',min:1,max:2,padrao:1,maxDia:25,freq:'1 vez ao dia',dosesDia:1,continuo:true,diasQtd:30,fonte:'SBP 2021'},
+  {id:'trat',label:'Tratamento de anemia ferropriva',modo:'kg',base:'dia',min:3,max:5,padrao:3,maxDia:60,freq:'1 vez ao dia',dosesDia:1,dias:90,fonte:'SBP 2021'}]},
+{id:'mebend', nome:'Mebendazol', grupo:'Outros', comerciais:['Pantelmin','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'100 mg/5 mL suspensão oral',forma:'liquido',conc:20,frasco:30,via:'oral'},
+  {id:'c',label:'100 mg comprimido',forma:'unid',conc:100,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'ver',label:'Verminose',modo:'faixa',intervalo:12,dias:3,
+  faixas:[{label:'100 mg de 12/12 h por 3 dias',dose:100},{label:'500 mg em dose única',dose:500,unica:true}],
+  obs:'Bula: a partir de 2 anos (OMS aceita a partir de 1 ano).',fonte:'Bula Pantelmin (Anvisa); OMS'}]},
+{id:'albend', nome:'Albendazol', grupo:'Outros', comerciais:['Zentel','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'400 mg/10 mL suspensão oral',forma:'liquido',conc:40,frasco:10,via:'oral'},
+  {id:'c',label:'400 mg comprimido mastigável',forma:'unid',conc:400,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'ver',label:'Verminose',modo:'faixa',unica:true,faixaPadrao:1,
+  faixas:[{label:'1 a 2 anos – 200 mg',dose:200},{label:'> 2 anos – 400 mg',dose:400}],
+  obs:'Pode repetir em 2 a 3 semanas conforme o parasita.',fonte:'Bula Zentel (Anvisa); OMS'}]},
+{id:'nistatina', nome:'Nistatina', grupo:'Outros', comerciais:['Micostatin','genérico'], un:'UI',
+ apres:[{id:'s',label:'100.000 UI/mL suspensão oral',forma:'liquido',conc:100000,frasco:50,via:'oral',verbo:'Aplicar',viaTxt:'na boca (metade de cada lado)'}],
+ ind:[{id:'mon',label:'Candidíase oral (sapinho)',modo:'faixa',faixaPadrao:1,intervalo:6,dias:7,
+  faixas:[{label:'Prematuro / baixo peso – 1 mL (100.000 UI)',dose:100000},{label:'Lactente – 2 mL (200.000 UI)',dose:200000},{label:'Criança maior – 4 mL (400.000 UI)',dose:400000}],
+  obs:'Manter por 2 dias após o desaparecimento das lesões.',fonte:'Bula Micostatin (Anvisa)'}]},
+
+// ---------- TEA / TDAH ----------
+{id:'mfdc', nome:'Metilfenidato (ação curta)', rx:'Metilfenidato', grupo:'TEA / TDAH', comerciais:['Ritalina'], un:'mg', controle:'A',
+ apres:[{id:'c10',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'tdah',label:'TDAH (≥ 6 anos)',modo:'livre',padrao:5,step:2.5,maxDia:60,continuo:true,diasQtd:30,
+  freqs:[{t:'pela manhã',d:1},{t:'pela manhã e no almoço',d:2},{t:'pela manhã, no almoço e no meio da tarde',d:3}],freqPadrao:1,
+  guia:['Iniciar 5 mg 1 a 2 vezes ao dia (café da manhã e almoço).','Aumentar 5 a 10 mg por semana, conforme resposta.','Máximo 60 mg/dia.'],
+  fonte:'Bula Ritalina (Anvisa); AAP 2019'}]},
+{id:'mfdl', nome:'Metilfenidato (ação prolongada)', rx:'Metilfenidato', grupo:'TEA / TDAH', comerciais:['Ritalina LA','Concerta'], un:'mg', controle:'A',
+ apres:[
+  {id:'la10',label:'Ritalina LA 10 mg cápsula',forma:'unid',conc:10,un:'cápsula',frac:false,via:'oral'},
+  {id:'la20',label:'Ritalina LA 20 mg cápsula',forma:'unid',conc:20,un:'cápsula',frac:false,via:'oral'},
+  {id:'la30',label:'Ritalina LA 30 mg cápsula',forma:'unid',conc:30,un:'cápsula',frac:false,via:'oral'},
+  {id:'la40',label:'Ritalina LA 40 mg cápsula',forma:'unid',conc:40,un:'cápsula',frac:false,via:'oral'},
+  {id:'c18',label:'Concerta 18 mg comprimido',forma:'unid',conc:18,un:'comprimido',frac:false,via:'oral'},
+  {id:'c36',label:'Concerta 36 mg comprimido',forma:'unid',conc:36,un:'comprimido',frac:false,via:'oral'},
+  {id:'c54',label:'Concerta 54 mg comprimido',forma:'unid',conc:54,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'tdah',label:'TDAH (≥ 6 anos)',modo:'livre',maxDia:60,continuo:true,diasQtd:30,freqs:[{t:'pela manhã',d:1}],
+  guia:['Ritalina LA: iniciar 10 a 20 mg pela manhã; ajustar 10 mg por semana. Máximo 60 mg/dia.','Concerta: iniciar 18 mg pela manhã; ajustar 18 mg por semana. Máximo 54 mg/dia (6 a 12 anos) e 72 mg/dia (13 a 17 anos).','Engolir inteiro (Concerta). Ritalina LA pode ser aberta sobre alimento pastoso.'],
+  fonte:'Bulas Ritalina LA e Concerta (Anvisa)'}]},
+{id:'lisdex', nome:'Lisdexanfetamina', grupo:'TEA / TDAH', comerciais:['Venvanse'], un:'mg', controle:'A',
+ apres:[
+  {id:'30',label:'Venvanse 30 mg cápsula',forma:'unid',conc:30,un:'cápsula',frac:false,via:'oral'},
+  {id:'50',label:'Venvanse 50 mg cápsula',forma:'unid',conc:50,un:'cápsula',frac:false,via:'oral'},
+  {id:'70',label:'Venvanse 70 mg cápsula',forma:'unid',conc:70,un:'cápsula',frac:false,via:'oral'}],
+ ind:[{id:'tdah',label:'TDAH (≥ 6 anos)',modo:'livre',maxDia:70,continuo:true,diasQtd:30,freqs:[{t:'pela manhã',d:1}],
+  guia:['Iniciar 30 mg pela manhã.','Ajustar 20 mg por semana, conforme resposta.','Máximo 70 mg/dia. A cápsula pode ser aberta e dissolvida em água, iogurte ou suco.'],
+  fonte:'Bula Venvanse (Anvisa)'}]},
+{id:'atomox', nome:'Atomoxetina', grupo:'TEA / TDAH', comerciais:['Atentah','Strattera'], un:'mg', controle:'C1',
+ apres:[
+  {id:'10',label:'10 mg cápsula',forma:'unid',conc:10,un:'cápsula',frac:false,via:'oral'},
+  {id:'18',label:'18 mg cápsula',forma:'unid',conc:18,un:'cápsula',frac:false,via:'oral'},
+  {id:'25',label:'25 mg cápsula',forma:'unid',conc:25,un:'cápsula',frac:false,via:'oral'},
+  {id:'40',label:'40 mg cápsula',forma:'unid',conc:40,un:'cápsula',frac:false,via:'oral'},
+  {id:'60',label:'60 mg cápsula',forma:'unid',conc:60,un:'cápsula',frac:false,via:'oral'}],
+ ind:[{id:'tdah',label:'TDAH (≥ 6 anos, < 70 kg)',modo:'livre',padrao:p=>p?Math.max(10,Math.round(0.5*p)):10,maxDia:100,continuo:true,diasQtd:30,freqs:[{t:'pela manhã',d:1},{t:'de 12 em 12 horas',d:2}],
+  guiaKg:{inicial:0.5,alvo:1.2,max:1.4,maxMg:100},
+  guia:['Iniciar 0,5 mg/kg/dia por pelo menos 3 dias.','Aumentar para 1,2 mg/kg/dia (dose-alvo).','Máximo 1,4 mg/kg/dia ou 100 mg/dia.'],
+  obs:'Confirmar nomes comerciais e apresentações disponíveis no Brasil.',fonte:'Bula Strattera; AAP 2019'}]},
+{id:'clonidina', nome:'Clonidina', grupo:'TEA / TDAH', comerciais:['Atensina','genérico'], un:'mg',
+ apres:[
+  {id:'100',label:'0,100 mg comprimido',forma:'unid',conc:0.1,un:'comprimido',frac:true,via:'oral'},
+  {id:'150',label:'0,150 mg comprimido',forma:'unid',conc:0.15,un:'comprimido',frac:true,via:'oral'},
+  {id:'200',label:'0,200 mg comprimido',forma:'unid',conc:0.2,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'off',label:'TDAH / sono / tiques (off-label)',modo:'livre',padrao:0.05,step:0.025,maxDia:0.4,continuo:true,diasQtd:30,freqs:[{t:'à noite',d:1},{t:'de 12 em 12 horas',d:2}],
+  guia:['Iniciar 0,05 mg à noite.','Aumentar 0,05 mg a cada 3 a 7 dias.','Máximo 0,4 mg/dia. Não suspender de forma abrupta (rebote hipertensivo). Medir pressão arterial.'],
+  obs:'Receita simples (conferir).',fonte:'AACAP; BNF for Children'}]},
+{id:'risperi', nome:'Risperidona', grupo:'TEA / TDAH', comerciais:['Risperdal','Riss','Zargus','genérico'], un:'mg', controle:'C1',
+ apres:[
+  {id:'s',label:'1 mg/mL solução oral',forma:'liquido',conc:1,frasco:30,via:'oral'},
+  {id:'c1',label:'1 mg comprimido',forma:'unid',conc:1,un:'comprimido',frac:true,via:'oral'},
+  {id:'c2',label:'2 mg comprimido',forma:'unid',conc:2,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'tea',label:'TEA – irritabilidade (≥ 5 anos)',modo:'livre',padrao:p=>p&&p>=20?0.5:0.25,step:0.25,maxDia:3,continuo:true,diasQtd:30,
+  freqs:[{t:'à noite',d:1},{t:'de 12 em 12 horas',d:2}],
+  guia:['< 20 kg: iniciar 0,25 mg/dia; após 4 dias, 0,5 mg/dia.','≥ 20 kg: iniciar 0,5 mg/dia; após 4 dias, 1 mg/dia.','Ajustes de 0,25 mg (< 20 kg) ou 0,5 mg (≥ 20 kg) a cada 2 semanas ou mais. Dose usual 0,5 a 3 mg/dia.','Monitorar peso, glicemia, lipídios e prolactina.'],
+  fonte:'Bula Risperdal (Anvisa)'}]},
+{id:'aripi', nome:'Aripiprazol', grupo:'TEA / TDAH', comerciais:['Aristab','Abilify','genérico'], un:'mg', controle:'C1',
+ apres:[
+  {id:'s',label:'1 mg/mL solução oral',forma:'liquido',conc:1,frasco:150,via:'oral',conferir:'Confirmar disponibilidade da solução oral.'},
+  {id:'c10',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:true,via:'oral'},
+  {id:'c15',label:'15 mg comprimido',forma:'unid',conc:15,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'tea',label:'TEA – irritabilidade (6 a 17 anos)',modo:'livre',padrao:2,step:1,maxDia:15,continuo:true,diasQtd:30,freqs:[{t:'1 vez ao dia',d:1}],
+  guia:['Iniciar 2 mg/dia.','Após 1 semana, 5 mg/dia.','Aumentos de 5 mg a cada semana ou mais. Máximo 15 mg/dia.'],
+  fonte:'Bula Abilify (FDA/Anvisa)'}]},
+{id:'melato', nome:'Melatonina', grupo:'TEA / TDAH', comerciais:['manipulado','suplementos (0,21 mg)'], un:'mg',
+ apres:[
+  {id:'c1',label:'1 mg cápsula (manipulada)',forma:'unid',conc:1,un:'cápsula',frac:false,via:'oral'},
+  {id:'c3',label:'3 mg cápsula (manipulada)',forma:'unid',conc:3,un:'cápsula',frac:false,via:'oral'}],
+ ind:[{id:'sono',label:'Insônia em TEA / TDAH (off-label)',modo:'livre',padrao:1,step:1,maxDia:10,continuo:true,diasQtd:30,freqs:[{t:'30 a 60 minutos antes de dormir',d:1}],
+  guia:['Iniciar 1 a 3 mg, 30 a 60 min antes de dormir.','Ajustar conforme resposta; dose usual até 5 mg (< 40 kg).','Máximo usual 10 mg. Sempre associar higiene do sono.'],
+  obs:'Suplementos vendidos no Brasil têm 0,21 mg por dose.',fonte:'Consenso europeu (Bruni 2015); estudos em TEA'}]},
+// ---------- Ouvido ----------
+{id:'ciprohc', nome:'Ciprofloxacino + hidrocortisona otológico', rx:'Ciprofloxacino + hidrocortisona', grupo:'Ouvido', comerciais:['Cipro HC','Otociriax'], un:'',
+ apres:[{id:'g',label:'suspensão otológica',forma:'unid',conc:1,un:'frasco',via:'otológico'}],
+ ind:[{id:'oe',label:'Otite externa aguda',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'3 gotas de 12/12 h por 7 dias',texto:'Pingar 3 gotas no(s) ouvido(s) afetado(s) de 12 em 12 horas por 7 dias. Agitar antes de usar e aquecer o frasco na mão.'}],
+  obs:'A partir de 1 ano. Não usar se houver perfuração do tímpano; não é indicado para otite média. Validade de 14 dias após aberto.',fonte:'Bula Cipro HC (Alcon); Otociriax'}]},
+{id:'otosporin', nome:'Otosporin', rx:'Neomicina + polimixina B + hidrocortisona', grupo:'Ouvido', comerciais:['Otosporin','genérico'], un:'',
+ apres:[{id:'g',label:'suspensão otológica',forma:'unid',conc:1,un:'frasco',via:'otológico'}],
+ ind:[{id:'oe',label:'Otite externa',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'3 gotas 3 a 4x/dia por 7 dias',texto:'Pingar 3 gotas no(s) ouvido(s) afetado(s) 3 a 4 vezes ao dia por 7 dias.'}],
+  obs:'Não usar se houver perfuração do tímpano (neomicina é ototóxica). Conferir posologia na bula.',fonte:'Bula Otosporin (Anvisa)'}]},
+{id:'cerumin', nome:'Cerumin', rx:'Oleato de trolamina (Cerumin)', grupo:'Ouvido', comerciais:['Cerumin'], un:'',
+ apres:[{id:'g',label:'solução otológica',forma:'unid',conc:1,un:'frasco',via:'otológico'}],
+ ind:[{id:'cer',label:'Cerume impactado',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'Preencher o conduto por 15 a 30 min',texto:'Com a cabeça inclinada, preencher o conduto auditivo com a solução e manter por 15 a 30 minutos; depois, deixar escorrer e limpar só a parte externa.'}],
+  obs:'Não usar com perfuração do tímpano ou otite. Conferir posologia na bula.',fonte:'Bula Cerumin (Anvisa)'}]},
+
+// ---------- Novos (lote 3) ----------
+{id:'decanasal', nome:'Decadron nasal', rx:'Dexametasona + neomicina + fenilefrina', grupo:'Respiratório', comerciais:['Decadron nasal'], un:'',
+ apres:[{id:'sp',label:'solução nasal (frasco nebulizador 20 mL)',forma:'unid',conc:1,un:'frasco',via:'nasal'}],
+ ind:[{id:'rin',label:'Rinossinusite / congestão (uso curto)',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'1 jato em cada narina de 8/8 h por 5 dias',texto:'Aplicar 1 jato em cada narina de 8 em 8 horas por 5 dias.'},{label:'1 jato em cada narina de 12/12 h por 5 dias',texto:'Aplicar 1 jato em cada narina de 12 em 12 horas por 5 dias.'}],
+  obs:'A bula não traz dose pediátrica (adulto: 3 jatos de 3/3 h). Contém fenilefrina (vasoconstritor): evitar em menores de 6 anos e uso prolongado (efeito rebote). Contém corticoide e antibiótico. Posologia acima é sugestão a definir pela Dra. Anna.',fonte:'Bula Decadron nasal (Aché)'}]},
+{id:'torante', nome:'Hedera helix (Torante)', rx:'Hedera helix 15 mg/mL', grupo:'Respiratório', comerciais:['Torante'], un:'',
+ apres:[{id:'x',label:'xarope 15 mg/mL',forma:'unid',conc:1,un:'frasco',via:'oral'}],
+ ind:[{id:'tos',label:'Tosse com secreção',modo:'opcoes',qtdPadrao:'1 frasco (100 mL)',
+  opcoes:[{label:'2 a 5 anos: 2 mL de 8/8 h',texto:'Tomar 2 mL via oral de 8 em 8 horas por 7 dias.'},{label:'6 a 12 anos: 4 mL de 8/8 h',texto:'Tomar 4 mL via oral de 8 em 8 horas por 7 dias.'},{label:'> 12 anos: 7,5 mL de 8/8 h',texto:'Tomar 7,5 mL via oral de 8 em 8 horas por 7 dias.'}],
+  obs:'Contraindicado em menores de 2 anos. As fontes divergem na posologia (2 ou 3 vezes ao dia): conferir na bula da embalagem. Contém sorbitol.',fonte:'Bula Torante (bulas.med.br; Momenta)'}]},
+{id:'dexaoral', nome:'Dexametasona oral', rx:'Dexametasona', grupo:'Respiratório', comerciais:['Decadron','genérico'], un:'mg',
+ apres:[
+  {id:'el',label:'0,1 mg/mL elixir',forma:'liquido',conc:0.1,frasco:120,via:'oral'},
+  {id:'c05',label:'0,5 mg comprimido',forma:'unid',conc:0.5,un:'comprimido',frac:true,via:'oral'},
+  {id:'c4',label:'4 mg comprimido',forma:'unid',conc:4,un:'comprimido',frac:true,via:'oral'}],
+ ind:[
+  {id:'crupe',label:'Laringite (crupe)',modo:'kg',base:'dose',min:0.15,max:0.6,padrao:0.15,maxDose:10,unica:true,dosesDia:1,
+   obs:'0,15 mg/kg costuma bastar no crupe leve a moderado; 0,6 mg/kg nos graves. O elixir dá volumes grandes: considerar comprimido ou a solução injetável por via oral.',fonte:'Cochrane 2023 (crupe); SBP'},
+  {id:'asma',label:'Crise de asma (alternativa à prednisolona)',modo:'kg',base:'dose',min:0.3,max:0.6,padrao:0.6,maxDose:16,freq:'1 vez ao dia',dosesDia:1,dias:2,fonte:'GINA 2024; AAP'}]},
+{id:'montelu', nome:'Montelucaste', grupo:'Respiratório', comerciais:['Singulair','Singulair Baby','Montelair','genérico'], un:'mg',
+ apres:[
+  {id:'s4',label:'4 mg sachê',forma:'unid',conc:4,un:'sachê',frac:false,via:'oral'},
+  {id:'m4',label:'4 mg comprimido mastigável',forma:'unid',conc:4,un:'comprimido',frac:false,via:'oral'},
+  {id:'m5',label:'5 mg comprimido mastigável',forma:'unid',conc:5,un:'comprimido',frac:false,via:'oral'},
+  {id:'c10',label:'10 mg comprimido',forma:'unid',conc:10,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'ctrl',label:'Asma / rinite alérgica',modo:'faixa',faixaPadrao:1,freq:'1 vez ao dia, à noite',dosesDia:1,continuo:true,diasQtd:30,
+  faixas:[{label:'6 meses a 5 anos – 4 mg',dose:4},{label:'2 a 5 anos – 4 mg (mastigável)',dose:4},{label:'6 a 14 anos – 5 mg',dose:5},{label:'≥ 15 anos – 10 mg',dose:10}],
+  obs:'Alerta da FDA (2020): risco de efeitos neuropsiquiátricos (pesadelos, agitação, alteração de humor). Orientar a família.',fonte:'Bula Singulair (Anvisa); FDA 2020'}]},
+{id:'ambroxol', nome:'Ambroxol', grupo:'Respiratório', comerciais:['Mucosolvan','Fluibron','genérico'], un:'mg',
+ apres:[{id:'p',label:'15 mg/5 mL xarope pediátrico',forma:'liquido',conc:3,frasco:120,via:'oral'}],
+ ind:[{id:'tos',label:'Tosse com secreção',modo:'faixa',faixaPadrao:1,dias:5,
+  faixas:[{label:'< 2 anos – 7,5 mg (2,5 mL) de 12/12 h',dose:7.5,t:H(12),d:2},{label:'2 a 5 anos – 7,5 mg (2,5 mL) de 8/8 h',dose:7.5,t:H(8),d:3},{label:'6 a 12 anos – 15 mg (5 mL) de 8/8 h',dose:15,t:H(8),d:3}],
+  obs:'Uso em menores de 2 anos só com indicação médica.',fonte:'Bula Mucosolvan (Anvisa)'}]},
+
+{id:'racecado', nome:'Racecadotrila', grupo:'Gastro', comerciais:['Tiorfan','Avide','genérico'], un:'mg',
+ apres:[
+  {id:'s10',label:'10 mg sachê (lactentes)',forma:'unid',conc:10,un:'sachê',frac:false,via:'oral'},
+  {id:'s30',label:'30 mg sachê (crianças)',forma:'unid',conc:30,un:'sachê',frac:false,via:'oral'}],
+ ind:[{id:'dia',label:'Diarreia aguda (junto com o soro de reidratação)',modo:'faixa',intervalo:8,dias:5,
+  faixas:[{label:'< 9 kg – 10 mg',dose:10,kgMin:0,kgMax:9},{label:'9 a 13 kg – 20 mg',dose:20,kgMin:9,kgMax:13},{label:'13 a 27 kg – 30 mg',dose:30,kgMin:13,kgMax:27},{label:'> 27 kg – 60 mg',dose:60,kgMin:27,kgMax:999}],
+  obs:'1,5 mg/kg/dose. Usar até 2 evacuações normais, no máximo 7 dias. A partir de 3 meses.',fonte:'Bula Tiorfan (Anvisa)'}]},
+{id:'floratil', nome:'Saccharomyces boulardii', grupo:'Gastro', comerciais:['Floratil','Repoflor','genérico'], un:'',
+ apres:[{id:'s',label:'200 mg sachê ou cápsula',forma:'unid',conc:1,un:'sachê',via:'oral'}],
+ ind:[{id:'dia',label:'Diarreia aguda / uso com antibiótico',modo:'opcoes',qtdPadrao:'1 caixa',
+  opcoes:[{label:'1 sachê de 12/12 h por 5 dias',texto:'Tomar 1 sachê via oral de 12 em 12 horas por 5 dias, diluído em água ou alimento frio.'},{label:'1 sachê 1x/dia durante o antibiótico',texto:'Tomar 1 sachê via oral 1 vez ao dia enquanto usar o antibiótico, diluído em água ou alimento frio.'}],
+  obs:'Não misturar com bebida quente. Evitar em imunossuprimidos e com cateter venoso central.',fonte:'Bula Floratil (Anvisa); ESPGHAN 2016'}]},
+{id:'floripa', nome:'Floripa (BB-12)', rx:'Bifidobacterium lactis BB-12 (Floripa)', grupo:'Gastro', comerciais:['Floripa'], un:'',
+ apres:[{id:'g',label:'gotas 8 mL',forma:'unid',conc:1,un:'frasco',via:'oral'}],
+ ind:[{id:'col',label:'Cólica / função intestinal',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'6 gotas 1x/dia',texto:'Tomar 6 gotas via oral 1 vez ao dia, por 30 dias.'}],
+  obs:'Suplemento alimentar (não é medicamento). Evitar em imunocomprometidos.',fonte:'Bula Floripa (Eurofarma)'}]},
+{id:'colikids', nome:'Lactobacillus reuteri', grupo:'Gastro', comerciais:['Colikids','Probiatop','BioGaia'], un:'',
+ apres:[{id:'g',label:'gotas',forma:'unid',conc:1,un:'frasco',via:'oral'}],
+ ind:[{id:'col',label:'Cólica do lactente',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'5 gotas 1x/dia por 21 dias',texto:'Tomar 5 gotas via oral 1 vez ao dia por 21 dias.'}],
+  obs:'Maior benefício em bebês em aleitamento materno. Conferir o nº de gotas da marca (Probiatop tem outra composição).',fonte:'Sung, Pediatrics 2018; ESPGHAN'}]},
+{id:'enterog', nome:'Bacillus clausii', grupo:'Gastro', comerciais:['Enterogermina'], un:'',
+ apres:[{id:'f',label:'flaconete 5 mL',forma:'unid',conc:1,un:'flaconete',via:'oral'}],
+ ind:[{id:'dia',label:'Diarreia / uso com antibiótico',modo:'opcoes',qtdPadrao:'1 caixa (10 flaconetes)',
+  opcoes:[{label:'1 flaconete 2x/dia por 5 dias',texto:'Tomar 1 flaconete via oral de 12 em 12 horas por 5 dias.'},{label:'1 flaconete 1x/dia',texto:'Tomar 1 flaconete via oral 1 vez ao dia por 10 dias.'}],fonte:'Bula Enterogermina (Anvisa)'}]},
+{id:'bromo', nome:'Bromoprida', grupo:'Gastro', comerciais:['Digesan','Plamet','genérico'], un:'mg',
+ apres:[{id:'g',label:'4 mg/mL gotas',forma:'gotas',conc:4,gotasMl:24,frasco:20,via:'oral',conferir:'Conferir nº de gotas/mL da marca (Digesan: 24 gotas/mL).'}],
+ ind:[{id:'vom',label:'Náuseas / vômitos',modo:'kg',base:'dia',min:0.5,max:1,padrao:0.5,maxDose:10,intervalo:8,cond:'se náuseas ou vômitos',
+  obs:'Referência prática: 1 gota/kg/dose. Risco de efeitos extrapiramidais; evitar em menores de 1 ano. Preferir ondansetrona.',fonte:'Bula Digesan (Anvisa)'}]},
+{id:'dimen', nome:'Dimenidrinato', grupo:'Gastro', comerciais:['Dramin B6 DL gotas','genérico'], un:'mg',
+ apres:[{id:'g',label:'25 mg/mL gotas',forma:'gotas',conc:25,gotasMl:20,frasco:20,via:'oral',conferir:'Confirmar concentração e nº de gotas/mL da apresentação.'}],
+ ind:[{id:'vom',label:'Náuseas / vômitos / enjoo de viagem',modo:'kg',base:'dose',min:1.25,max:1.25,padrao:1.25,maxDose:25,maxDia:75,intervalo:6,cond:'se náuseas ou vômitos',
+  obs:'A partir de 2 anos. Máximo 75 mg/dia (2 a 6 anos) e 150 mg/dia (6 a 12 anos). Causa sonolência.',fonte:'Bula Dramin B6 (Anvisa)'}]},
+{id:'buscopan', nome:'Escopolamina (butilbrometo)', rx:'Butilbrometo de escopolamina', grupo:'Gastro', comerciais:['Buscopan gotas','genérico'], un:'mg',
+ apres:[{id:'g',label:'10 mg/mL gotas',forma:'gotas',conc:10,gotasMl:20,frasco:20,via:'oral'}],
+ ind:[{id:'col',label:'Cólica abdominal',modo:'faixa',faixaPadrao:1,intervalo:8,cond:'se cólica',
+  faixas:[{label:'Lactentes – 5 mg (10 gotas)',dose:5},{label:'1 a 6 anos – 5 mg (10 gotas)',dose:5},{label:'1 a 6 anos – 10 mg (20 gotas)',dose:10},{label:'> 6 anos – 10 a 20 mg (20 a 40 gotas)',dose:15}],
+  obs:'Bula (< 6 anos, por peso): 0,3 a 0,5 mg/kg/dose de 1 a 6 anos; 0,7 mg/kg/dose de 3 a 11 meses. Não usar por tempo prolongado sem investigar a causa da dor.',fonte:'Bula Buscopan gotas (Anvisa)'}]},
+{id:'cocyntal', nome:'Cocyntal', rx:'Cocyntal (homeopático)', grupo:'Gastro', comerciais:['Cocyntal (Boiron)'], un:'',
+ apres:[{id:'f',label:'solução oral flaconete 1 mL',forma:'unid',conc:1,un:'flaconete',via:'oral'}],
+ ind:[{id:'col',label:'Cólica do lactente',modo:'opcoes',qtdPadrao:'1 caixa (10 flaconetes)',
+  opcoes:[{label:'1 flaconete na cólica, até 8x/dia',texto:'Dar 1 flaconete via oral em caso de cólica, com intervalo mínimo de 1 hora, até 8 vezes ao dia. Espaçar conforme a melhora.'}],
+  obs:'Homeopático; a bula informa que não há estudos clínicos de eficácia.',fonte:'Bula Cocyntal (bula.com.br)'}]},
+{id:'lactulose', nome:'Lactulose', grupo:'Gastro', comerciais:['Lactulona','Farlac','genérico'], un:'mL',
+ apres:[{id:'x',label:'667 mg/mL xarope',forma:'liquido',conc:1,frasco:120,via:'oral'}],
+ ind:[
+  {id:'idade',label:'Constipação (por idade)',modo:'faixa',faixaPadrao:1,freq:'1 vez ao dia',dosesDia:1,dias:30,
+   faixas:[{label:'Lactentes – 5 mL/dia',dose:5},{label:'1 a 5 anos – 5 a 10 mL/dia',dose:7.5},{label:'6 a 12 anos – 10 a 15 mL/dia',dose:12.5},{label:'> 12 anos – 15 a 30 mL/dia',dose:20}],
+   extra:'Ajustar a dose para fezes macias diárias.',obs:'Pode causar gases e cólica no início.',fonte:'Bula Lactulona (Anvisa); NASPGHAN 2014'},
+  {id:'kg',label:'Constipação (pelo peso)',modo:'kg',base:'dia',min:1,max:2,padrao:1,maxDia:30,freq:'1 vez ao dia',dosesDia:1,dias:30,extra:'Ajustar a dose para fezes macias diárias.',fonte:'NASPGHAN 2014'}]},
+{id:'peglax', nome:'Macrogol 4000 (PEG)', rx:'Macrogol 4000', grupo:'Gastro', comerciais:['Peg-Lax','genérico'], un:'g',
+ apres:[{id:'s',label:'0,5 g/mL solução oral',forma:'liquido',conc:0.5,frasco:250,via:'oral'}],
+ ind:[{id:'cons',label:'Constipação (manutenção)',modo:'kg',base:'dia',min:0.4,max:0.8,padrao:0.7,maxDia:20,freq:'1 vez ao dia',dosesDia:1,dias:30,extra:'Pode misturar em suco ou água. Ajustar para fezes macias diárias.',
+  obs:'Bula Peg-Lax: 1,4 mL/kg/dia (≈ 0,7 g/kg), máximo 40 mL/dia, acima de 2 anos. Desimpactação: 1 a 1,5 g/kg/dia por 3 a 6 dias.',fonte:'Bula Peg-Lax (Myralis); NASPGHAN 2014'}]},
+{id:'minilax', nome:'Minilax', rx:'Sorbitol + laurilsulfato de sódio', grupo:'Gastro', comerciais:['Minilax'], un:'',
+ apres:[{id:'b',label:'bisnaga 6,5 g (enema retal)',forma:'unid',conc:1,un:'bisnaga',via:'retal'}],
+ ind:[{id:'cons',label:'Fezes endurecidas / constipação aguda',modo:'opcoes',qtdPadrao:'1 caixa',
+  opcoes:[{label:'1 bisnaga, dose única',texto:'Aplicar 1 bisnaga via retal, em dose única. Pode repetir no dia seguinte se necessário.'},{label:'½ bisnaga (lactentes)',texto:'Aplicar metade da bisnaga via retal, em dose única.'}],
+  obs:'Bula: a partir de 2 dias de vida; dose pediátrica individualizada pelo médico. Não usar de rotina.',fonte:'Bula Minilax (Momenta)'}]},
+
+{id:'fexo', nome:'Fexofenadina', grupo:'Alergia', comerciais:['Allegra','Allegra pediátrico','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'6 mg/mL suspensão oral',forma:'liquido',conc:6,frasco:60,via:'oral'},
+  {id:'c60',label:'60 mg comprimido',forma:'unid',conc:60,un:'comprimido',frac:false,via:'oral'},
+  {id:'c120',label:'120 mg comprimido',forma:'unid',conc:120,un:'comprimido',frac:false,via:'oral'},
+  {id:'c180',label:'180 mg comprimido',forma:'unid',conc:180,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'al',label:'Rinite alérgica / urticária',modo:'faixa',faixaPadrao:1,dias:10,
+  faixas:[{label:'6 meses a 2 anos – 15 mg (2,5 mL) de 12/12 h',dose:15,t:H(12),d:2},{label:'2 a 11 anos – 30 mg (5 mL) de 12/12 h',dose:30,t:H(12),d:2},{label:'≥ 12 anos – 120 mg 1 vez ao dia',dose:120,t:'1 vez ao dia',d:1},{label:'≥ 12 anos – 180 mg 1 vez ao dia (urticária)',dose:180,t:'1 vez ao dia',d:1}],
+  fonte:'Bula Allegra (Anvisa)'}]},
+{id:'polara', nome:'Dexclorfeniramina', grupo:'Alergia', comerciais:['Polaramine','genérico'], un:'mg',
+ apres:[{id:'x',label:'2 mg/5 mL xarope',forma:'liquido',conc:0.4,frasco:120,via:'oral'}],
+ ind:[{id:'al',label:'Alergia / prurido',modo:'faixa',faixaPadrao:0,intervalo:8,dias:5,
+  faixas:[{label:'2 a 6 anos – 0,5 mg (1,25 mL)',dose:0.5},{label:'6 a 12 anos – 1 mg (2,5 mL)',dose:1},{label:'> 12 anos – 2 mg (5 mL)',dose:2}],
+  obs:'Contraindicado em menores de 2 anos. Causa sonolência.',fonte:'Bula Polaramine (Anvisa)'}]},
+
+{id:'tobra', nome:'Tobramicina colírio', rx:'Tobramicina 0,3%', grupo:'Olhos', comerciais:['Tobrex','genérico'], un:'',
+ apres:[{id:'c',label:'colírio 5 mL',forma:'unid',conc:1,un:'frasco',via:'oftálmico'}],
+ ind:[{id:'conj',label:'Conjuntivite bacteriana',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'1 gota de 4/4 h por 7 dias',texto:'Pingar 1 gota no(s) olho(s) afetado(s) de 4 em 4 horas por 7 dias.'},{label:'Casos intensos: 2 gotas de 1/1 h no 1º dia',texto:'Pingar 2 gotas no(s) olho(s) afetado(s) de 1 em 1 hora no primeiro dia; depois, 1 gota de 4 em 4 horas até completar 7 dias.'}],
+  extra:'Limpar a secreção com soro fisiológico antes.',obs:'Não encostar o bico do frasco no olho. Conjuntivite em recém-nascido: avaliação especial.',fonte:'Bula Tobrex (Anvisa); AAO'}]},
+{id:'moxi', nome:'Moxifloxacino colírio', rx:'Moxifloxacino 0,5%', grupo:'Olhos', comerciais:['Vigamox','genérico'], un:'',
+ apres:[{id:'c',label:'colírio 5 mL',forma:'unid',conc:1,un:'frasco',via:'oftálmico'}],
+ ind:[{id:'conj',label:'Conjuntivite bacteriana',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'1 gota de 8/8 h por 7 dias',texto:'Pingar 1 gota no(s) olho(s) afetado(s) de 8 em 8 horas por 7 dias.'}],obs:'Bula: a partir de 1 ano.',fonte:'Bula Vigamox (Anvisa)'}]},
+{id:'cipro', nome:'Ciprofloxacino colírio', rx:'Ciprofloxacino 0,3%', grupo:'Olhos', comerciais:['Ciloxan','genérico'], un:'',
+ apres:[{id:'c',label:'colírio 5 mL',forma:'unid',conc:1,un:'frasco',via:'oftálmico'}],
+ ind:[{id:'conj',label:'Conjuntivite bacteriana',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'1 a 2 gotas de 4/4 h por 7 dias',texto:'Pingar 1 a 2 gotas no(s) olho(s) afetado(s) de 4 em 4 horas (acordado) por 7 dias.'}],obs:'Bula: a partir de 1 ano.',fonte:'Bula Ciloxan (Anvisa)'}]},
+{id:'olopa', nome:'Olopatadina colírio', rx:'Olopatadina 0,1%', grupo:'Olhos', comerciais:['Patanol','genérico'], un:'',
+ apres:[{id:'c',label:'colírio 0,1% 5 mL',forma:'unid',conc:1,un:'frasco',via:'oftálmico'}],
+ ind:[{id:'al',label:'Conjuntivite alérgica',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'1 gota de 12/12 h',texto:'Pingar 1 gota em cada olho de 12 em 12 horas por 14 dias.'}],obs:'A partir de 3 anos. Patanol S (0,2%) é 1 vez ao dia.',fonte:'Bula Patanol (Anvisa)'}]},
+
+{id:'assadura', nome:'Pomada para assadura (barreira)', rx:'Óxido de zinco + vitaminas A e D', grupo:'Pele', comerciais:['Hipoglós','Desitin','Bepantol Baby (dexpantenol)'], un:'',
+ apres:[{id:'p',label:'pomada (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'ass',label:'Dermatite da fralda',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'A cada troca de fralda',texto:'Aplicar camada generosa na área da fralda a cada troca, sem esfregar para retirar a anterior.'}],
+  extra:'Trocar fraldas com frequência e deixar a pele arejar.',fonte:'SBP (dermatite da fralda)'}]},
+{id:'dermodex', nome:'Nistatina + óxido de zinco', grupo:'Pele', comerciais:['Dermodex','genérico'], un:'',
+ apres:[{id:'p',label:'pomada (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'cand',label:'Assadura com cândida',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'A cada troca por 7 a 14 dias',texto:'Aplicar na área da fralda a cada troca por 7 a 14 dias (manter 2 dias após melhorar).'}],fonte:'Bula Dermodex (Anvisa)'}]},
+{id:'hidroco', nome:'Hidrocortisona creme 1%', rx:'Hidrocortisona 1%', grupo:'Pele', comerciais:['Berlison','genérico'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'derm',label:'Dermatite / eczema leve (face e dobras)',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2x/dia por 7 dias',texto:'Aplicar camada fina nas lesões 2 vezes ao dia por 7 dias.'}],
+  obs:'Corticoide de baixa potência: preferido em face, dobras e área da fralda.',fonte:'AAD; SBP (dermatite atópica)'}]},
+{id:'desonida', nome:'Desonida 0,05%', grupo:'Pele', comerciais:['Desonol','Adinos','genérico'], un:'',
+ apres:[{id:'c',label:'creme ou loção (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'derm',label:'Dermatite / eczema',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2x/dia por 7 dias',texto:'Aplicar camada fina nas lesões 2 vezes ao dia por 7 dias.'},{label:'1x/dia por 7 dias',texto:'Aplicar camada fina nas lesões 1 vez ao dia por 7 dias.'}],
+  obs:'Baixa potência. Associar hidratante.',fonte:'SBP (dermatite atópica)'}]},
+{id:'mometa', nome:'Mometasona creme 0,1%', rx:'Furoato de mometasona 0,1%', grupo:'Pele', comerciais:['Elocom','genérico'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'derm',label:'Dermatite / eczema moderado (corpo)',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'1x/dia por até 7 dias',texto:'Aplicar camada fina nas lesões 1 vez ao dia por até 7 dias.'}],
+  obs:'Média potência: evitar face, dobras e área da fralda. A partir de 2 anos.',fonte:'Bula Elocom (Anvisa)'}]},
+{id:'mupiro', nome:'Mupirocina 2%', grupo:'Pele', comerciais:['Bactroban','genérico'], un:'',
+ apres:[{id:'p',label:'pomada (bisnaga 15 g)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'imp',label:'Impetigo / infecção de pele localizada',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'3x/dia por 5 a 7 dias',texto:'Lavar com água e sabão e aplicar nas lesões 3 vezes ao dia por 5 a 7 dias.'}],fonte:'IDSA 2014 (pele); bula Bactroban'}]},
+{id:'fusid', nome:'Ácido fusídico 2%', grupo:'Pele', comerciais:['Verutex','genérico'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga 15 g)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'imp',label:'Impetigo / infecção de pele localizada',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'3x/dia por 7 dias',texto:'Lavar com água e sabão e aplicar nas lesões 3 vezes ao dia por 7 dias.'}],fonte:'Bula Verutex (Anvisa)'}]},
+{id:'neobac', nome:'Neomicina + bacitracina', grupo:'Pele', comerciais:['Nebacetin','genérico'], un:'',
+ apres:[{id:'p',label:'pomada (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'imp',label:'Ferimentos superficiais',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2 a 3x/dia por 7 dias',texto:'Aplicar nas lesões 2 a 3 vezes ao dia por 7 dias.'}],obs:'Neomicina causa dermatite de contato com frequência. Para impetigo, preferir mupirocina ou ácido fusídico.',fonte:'Bula Nebacetin (Anvisa)'}]},
+{id:'ceto', nome:'Cetoconazol creme 2%', rx:'Cetoconazol 2%', grupo:'Pele', comerciais:['Nizoral','genérico'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga 30 g)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'mic',label:'Micose de pele (tinha, pitiríase versicolor)',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'1x/dia por 2 a 4 semanas',texto:'Aplicar nas lesões e ao redor 1 vez ao dia por 2 a 4 semanas (manter 1 semana após melhorar).'}],fonte:'Bula Nizoral creme (Anvisa)'}]},
+{id:'micona', nome:'Miconazol creme 2%', rx:'Nitrato de miconazol 2%', grupo:'Pele', comerciais:['Daktarin','genérico'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'mic',label:'Micose de pele / candidíase cutânea',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2x/dia por 2 a 4 semanas',texto:'Aplicar nas lesões e ao redor 2 vezes ao dia por 2 a 4 semanas (manter 1 semana após melhorar).'}],fonte:'Bula Daktarin (Anvisa)'}]},
+{id:'clotri', nome:'Clotrimazol creme 1%', rx:'Clotrimazol 1%', grupo:'Pele', comerciais:['Canesten','genérico'], un:'',
+ apres:[{id:'c',label:'creme (bisnaga)',forma:'unid',conc:1,un:'bisnaga',via:'tópico'}],
+ ind:[{id:'mic',label:'Micose de pele / candidíase cutânea',modo:'opcoes',qtdPadrao:'1 bisnaga',
+  opcoes:[{label:'2 a 3x/dia por 2 a 4 semanas',texto:'Aplicar nas lesões e ao redor 2 a 3 vezes ao dia por 2 a 4 semanas.'}],fonte:'Bula Canesten (Anvisa)'}]},
+{id:'perme1', nome:'Permetrina 1% (piolho)', rx:'Permetrina 1% loção', grupo:'Pele', comerciais:['Nedax','Kwell','genérico'], un:'',
+ apres:[{id:'l',label:'loção (frasco 60 mL)',forma:'unid',conc:1,un:'frasco',via:'tópico'}],
+ ind:[{id:'pio',label:'Pediculose (piolho)',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'Aplicar 10 min e repetir em 7 dias',texto:'Após lavar e secar o cabelo, aplicar no couro cabeludo e cabelos, deixar agir por 10 minutos e enxaguar. Passar pente fino. Repetir após 7 a 10 dias.'}],
+  obs:'A partir de 2 meses. Conferir nomes comerciais e concentração de cada marca.',fonte:'AAP 2022 (pediculose)'}]},
+{id:'perme5', nome:'Permetrina 5% (escabiose)', rx:'Permetrina 5% loção', grupo:'Pele', comerciais:['Sanasar','genérico'], un:'',
+ apres:[{id:'l',label:'loção (frasco 60 mL)',forma:'unid',conc:1,un:'frasco',via:'tópico'}],
+ ind:[{id:'esc',label:'Escabiose (sarna)',modo:'opcoes',qtdPadrao:'1 frasco',
+  opcoes:[{label:'Corpo todo à noite, repetir em 7 dias',texto:'À noite, aplicar do pescoço aos pés (em bebês, incluir couro cabeludo e rosto, sem os olhos e a boca). Retirar no banho após 8 a 12 horas. Repetir após 7 dias.'}],
+  extra:'Tratar todos os contatos da casa ao mesmo tempo e lavar roupas de cama e toalhas em água quente.',obs:'A partir de 2 meses. Conferir nomes comerciais.',fonte:'CDC; AAP Red Book'}]},
+{id:'iverm', nome:'Ivermectina', grupo:'Pele', comerciais:['Revectina','genérico'], un:'mg',
+ apres:[{id:'c',label:'6 mg comprimido',forma:'unid',conc:6,un:'comprimido',frac:true,via:'oral'}],
+ ind:[{id:'pio',label:'Piolho / escabiose / estrongiloidíase',modo:'kg',base:'dose',min:0.2,max:0.2,padrao:0.2,unica:true,dosesDia:1,extra:'Repetir a mesma dose após 7 a 10 dias (piolho e escabiose).',
+  obs:'200 mcg/kg em dose única. Só a partir de 15 kg (e 5 anos, pela bula). Tomar em jejum.',fonte:'Bula Revectina (Anvisa); AAP Red Book'}]},
+
+{id:'nitazox', nome:'Nitazoxanida', grupo:'Outros', comerciais:['Annita','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'20 mg/mL suspensão oral',forma:'liquido',conc:20,frasco:45,via:'oral'},
+  {id:'c',label:'500 mg comprimido',forma:'unid',conc:500,un:'comprimido',frac:false,via:'oral'}],
+ ind:[{id:'par',label:'Giardíase / outras parasitoses / diarreia por rotavírus',modo:'kg',base:'dose',min:7.5,max:7.5,padrao:7.5,maxDose:500,intervalo:12,dias:3,
+  obs:'A partir de 1 ano. Tomar com alimento.',fonte:'Bula Annita (Anvisa)'}]},
+{id:'metro', nome:'Metronidazol', grupo:'Outros', comerciais:['Flagyl pediátrico','genérico'], un:'mg',
+ apres:[{id:'s',label:'40 mg/mL suspensão oral (benzoilmetronidazol)',forma:'liquido',conc:40,frasco:80,via:'oral'}],
+ ind:[
+  {id:'gia',label:'Giardíase',modo:'kg',base:'dia',min:15,max:15,padrao:15,maxDose:250,intervalo:8,dias:7,fonte:'Bula Flagyl (Anvisa); AAP Red Book'},
+  {id:'ame',label:'Amebíase',modo:'kg',base:'dia',min:35,max:50,padrao:35,maxDose:750,intervalo:8,dias:7,fonte:'AAP Red Book'}]},
+{id:'vitd', nome:'Vitamina D (colecalciferol)', rx:'Colecalciferol', grupo:'Outros', comerciais:['Addera D3','Depura','DPrev','genérico'], un:'UI',
+ apres:[{id:'g',label:'200 UI/gota',forma:'gotas',conc:4000,gotasMl:20,frasco:10,via:'oral',conferir:'Concentração varia por marca (ex.: 200 UI/gota). Conferir o produto prescrito.'}],
+ ind:[{id:'prof',label:'Profilaxia',modo:'faixa',freq:'1 vez ao dia',dosesDia:1,continuo:true,diasQtd:30,
+  faixas:[{label:'< 1 ano – 400 UI/dia',dose:400},{label:'1 a 2 anos – 600 UI/dia',dose:600}],fonte:'SBP 2016 (Guia prático de vitamina D)'}]},
+{id:'aciclo', nome:'Aciclovir', grupo:'Outros', comerciais:['Zovirax','genérico'], un:'mg',
+ apres:[
+  {id:'s',label:'200 mg/5 mL suspensão oral',forma:'liquido',conc:40,frasco:100,via:'oral',conferir:'Confirmar disponibilidade da suspensão.'},
+  {id:'c200',label:'200 mg comprimido',forma:'unid',conc:200,un:'comprimido',frac:true,via:'oral'},
+  {id:'c400',label:'400 mg comprimido',forma:'unid',conc:400,un:'comprimido',frac:true,via:'oral'}],
+ ind:[
+  {id:'var',label:'Varicela',modo:'kg',base:'dose',min:20,max:20,padrao:20,maxDose:800,intervalo:6,dias:5,
+   obs:'Iniciar em até 24 h do exantema. Indicada sobretudo em > 12 anos, doença crônica de pele/pulmão, uso de corticoide ou casos secundários na família.',fonte:'AAP Red Book 2024'},
+  {id:'geng',label:'Gengivoestomatite herpética',modo:'kg',base:'dose',min:15,max:15,padrao:15,maxDose:200,freq:'5 vezes ao dia',dosesDia:5,dias:7,
+   obs:'Benefício maior se iniciado nas primeiras 72 h.',fonte:'Amir, BMJ 1997; BNF for Children'}]},
+
+];
+const MED = Object.fromEntries(MEDS.map(m=>[m.id,m]));
+const GRUPOS = ['Todos','Meus','Febre e dor','Antibióticos','Respiratório','Alergia','Gastro','Olhos','Ouvido','Pele','Outros','TEA / TDAH'];
+/* nomes comerciais escolhíveis (sem "genérico", "manipulado", etc.) */
+function marcas(m, ap){
+  const todas = m.comerciais.filter(c=>!/gen[eé]rico|manipulad|suplemento|SUS/i.test(c)).map(c=>c.replace(/\s*\(.*\)\s*$/,''));
+  const inicia = (b,a)=>a.label.toLowerCase().startsWith(b.toLowerCase()+' ');
+  // quando a apresentação já é de uma marca (ex.: Concerta 36 mg), só essa marca vale
+  if(ap && m.apres.some(a=>todas.some(b=>inicia(b,a)))) return todas.filter(b=>inicia(b,ap)).sort((x,y)=>y.length-x.length).slice(0,1);
+  return todas;
+}
+function linhaNome(med, ap, marca){
+  const pa = med.rx||med.nome;
+  if(!marca) return `${pa} ${ap.label}`.trim();
+  let lab = ap.label; if(lab.toLowerCase().startsWith(marca.toLowerCase()+' ')) lab = lab.slice(marca.length+1);
+  else { const outra = marcas(med).find(b=>lab.toLowerCase().startsWith(b.toLowerCase()+' ')); if(outra) lab = lab.slice(outra.length+1); }
+  return `${marca} (${pa.charAt(0).toLowerCase()+pa.slice(1)}) ${lab}`;
+}
+const CTRL = {A:{tag:'Notificação A',txt:'Notificação de Receita A (amarela). Fazer no talonário próprio.',cls:'ctrlA'},C1:{tag:'Controle especial',txt:'Receita de controle especial em 2 vias.',cls:'ctrlC'}};
+
+/* ===================== CÁLCULO ===================== */
+const fmt = (n,d=2) => (Math.round(n*10**d)/10**d).toLocaleString('pt-BR',{maximumFractionDigits:d});
+const plural = (n,w) => n>1 ? (w==='cápsula'?'cápsulas':w+'s') : w;
+function unidTxt(n, w){
+  if(n===0.5) return `½ ${w}`;
+  if(n%1===0.5) return `${Math.floor(n)} e ½ ${plural(2,w)}`;
+  return `${n} ${plural(n,w)}`;
+}
+function roundLiquid(ml){const step = ml<1?0.05:ml<3?0.1:0.5; return {v:+(Math.round(ml/step)*step).toFixed(2), step};}
+function norm(s){return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
+
+function calc(it, peso){
+  if(it.custom){ const c=it.custom; return {custom:true, ok:!!(c.nome&&c.poso), avisos:[], med:{id:'custom',nome:c.nome||'(sem nome)',comerciais:[],un:''}, ap:{label:'',via:c.via||'oral'}, ind:{}, posologia:c.poso||'', qtdTotal:c.qtd||'1 unidade'}; }
+  const med=MED[it.med], ap=med.apres.find(a=>a.id===it.ap)||med.apres[0], ind=med.ind.find(i=>i.id===it.ind)||med.ind[0];
+  const r={med,ap,ind,avisos:[],ok:true,un:med.un};
+  if(ap.conferir) r.avisos.push({t:ap.conferir});
+  if(ind.modo==='opcoes'){ const o=ind.opcoes[it.opcao||0]; r.posologia=o.texto+(ind.extra?' '+ind.extra:''); r.qtdTotal=ind.qtdPadrao||'1 frasco'; return r; }
+
+  let dosesDia = ind.dosesDia ?? (ind.intervalo ? 24/ind.intervalo : 1);
+  let freqTxt = ind.freq ?? (ind.intervalo ? H(ind.intervalo) : '');
+  let unica = !!ind.unica;
+  let dose, cap=Infinity;
+
+  if(ind.modo==='kg'){
+    if(!peso){ r.ok=false; r.falta=true; return r; }
+    const v = it.valor ?? ind.padrao;
+    dose = ind.base==='dia' ? v*peso/dosesDia : v*peso;
+    r.alvo = dose;
+    if(v<ind.min-1e-9 || v>ind.max+1e-9) r.avisos.push({t:`${fmt(v)} ${med.un}/kg/${ind.base} está fora da faixa de referência (${fmt(ind.min)} a ${fmt(ind.max)}).`,danger:true});
+    if(ind.maxDose) cap=Math.min(cap, ind.maxDose);
+    if(ind.maxDia) cap=Math.min(cap, ind.maxDia/dosesDia);
+    if(dose>cap){ dose=cap; r.avisos.push({t:`Dose limitada ao máximo: ${fmt(cap)} ${med.un} por dose${ind.maxDia?` (${fmt(ind.maxDia)} ${med.un}/dia)`:''}.`}); }
+    if(ind.minDose && dose<ind.minDose){ dose=ind.minDose; r.avisos.push({t:`Dose elevada ao mínimo de ${fmt(ind.minDose)} ${med.un}.`}); }
+  } else if(ind.modo==='faixa'){
+    let idx = it.faixa;
+    if(idx==null){ idx = ind.faixaPadrao||0; if(peso) { const k=ind.faixas.findIndex(f=>f.kgMin!=null && peso>=f.kgMin && peso<f.kgMax); if(k>=0) idx=k; } }
+    const f=ind.faixas[idx]; r.faixaIdx=idx; dose=f.dose;
+    if(f.d){ dosesDia=f.d; freqTxt=f.t; }
+    if(f.unica) unica=true;
+    if(peso && f.kgMin!=null && (peso<f.kgMin || peso>=f.kgMax)) r.avisos.push({t:'A faixa escolhida não corresponde ao peso informado.',danger:true});
+  } else { // livre
+    const f = ind.freqs[it.freq ?? ind.freqPadrao ?? 0]; dosesDia=f.d; freqTxt=f.t;
+    const pad = typeof ind.padrao==='function' ? ind.padrao(peso) : (ind.padrao ?? ap.conc);
+    dose = it.valor ?? pad;
+    if(ind.maxDia && dose*dosesDia>ind.maxDia+1e-9) r.avisos.push({t:`Total de ${fmt(dose*dosesDia)} ${med.un}/dia passa do máximo de referência (${fmt(ind.maxDia)} ${med.un}/dia).`,danger:true});
+    if(ind.guiaKg && peso && dose*dosesDia > Math.min(ind.guiaKg.max*peso, ind.guiaKg.maxMg)+1e-9) r.avisos.push({t:`Acima de ${fmt(ind.guiaKg.max)} mg/kg/dia.`,danger:true});
+  }
+
+  // conversão para mL / gotas / unidades
+  let qtd, qtdTxt, real;
+  if(ap.forma==='liquido'){
+    let {v,step}=roundLiquid(dose/ap.conc);
+    if(v*ap.conc>cap+1e-9) v=+(v-step).toFixed(2);
+    if(v<=0){ r.ok=false; r.avisos.push({t:'Dose muito pequena para esta apresentação.',danger:true}); }
+    qtd=v; real=v*ap.conc; qtdTxt=`${fmt(v)} mL`;
+  } else if(ap.forma==='gotas'){
+    const porGota=ap.conc/ap.gotasMl;
+    let g=Math.round(dose/porGota);
+    if(g*porGota>cap+1e-9) g=Math.floor(cap/porGota);
+    g=Math.max(g,1); qtd=g; real=g*porGota; qtdTxt=`${g} ${g>1?'gotas':'gota'}`;
+  } else {
+    const step=ap.frac?0.5:1;
+    let n=Math.round(dose/ap.conc/step)*step;
+    if(n*ap.conc>cap+1e-9) n=Math.floor(cap/ap.conc/step)*step;
+    if(n<step){ r.ok=false; r.avisos.push({t:`A dose (${fmt(dose,3)} ${med.un}) é menor que ${ap.frac?'meio':'1'} ${ap.un}. Escolha outra apresentação.`,danger:true}); n=0; }
+    qtd=n; real=n*ap.conc; qtdTxt=unidTxt(n, ap.un);
+  }
+  r.qtd=qtd; r.real=real; r.dosesDia=unica?1:dosesDia; r.qtdTxt=qtdTxt;
+  if(r.alvo && real>0 && Math.abs(real-dose)/dose>0.1) r.avisos.push({t:`O arredondamento mudou a dose em ${fmt(Math.abs(real-dose)/dose*100,0)}%.`});
+  if(peso && real>0){ r.porKg=real/peso; r.porKgDia=real*r.dosesDia/peso; }
+
+  // posologia
+  const dias = it.dias ?? ind.dias;
+  const verbo=ap.verbo||'Tomar', via=ap.viaTxt||'via oral';
+  let p=`${verbo} ${qtdTxt} ${via}`;
+  if(unica) p+=' em dose única';
+  else { p+=` ${freqTxt}`; if(ind.cond) p+=`, ${ind.cond}`; else if(ind.continuo) p+=', uso contínuo'; else if(dias) p+=` por ${dias} ${dias>1?'dias':'dia'}`; }
+  p+='.'; if(ind.extra) p+=' '+ind.extra;
+  r.posologia=p; r.dias=dias; r.unica=unica;
+
+  // quantidade a dispensar
+  const diasConta = ind.continuo ? (it.dias ?? ind.diasQtd) : dias;
+  const doses = unica ? 1 : (ind.cond || !diasConta ? null : dosesDia*diasConta);
+  if(!doses || qtd<=0) r.qtdTotal = ap.frascos ? `1 frasco ${ap.frascos[0].t}` : ap.emb ? `1 ${ap.emb[0]}` : ap.forma==='unid' && ap.un!=='jato' ? '1 caixa' : '1 frasco';
+  else if(ap.frascos && (ap.forma==='liquido'||ap.forma==='gotas')){ const tot = ap.forma==='gotas' ? qtd*doses/ap.gotasMl : qtd*doses;
+    const folga = tot*1.1; // 10% de margem para perdas na seringa/frasco
+    const f = ap.frascos.find(x=>x.ml>=folga); const max=ap.frascos[ap.frascos.length-1];
+    r.qtdTotal = f ? `1 frasco ${f.t}` : `${Math.ceil(folga/max.ml)} frascos ${max.t}`; r.totalTxt=`${fmt(tot,1)} mL no total`; }
+  else if(ap.forma==='liquido'){ const tot=qtd*doses, fr=Math.max(1,Math.ceil(tot/ap.frasco-1e-9)); r.qtdTotal= ap.emb ? `${fr} ${ap.emb[fr>1?1:0]}` : `${fr} ${fr>1?'frascos':'frasco'} (${ap.frasco} mL)`; r.totalTxt=`${fmt(tot,1)} mL no total`; }
+  else if(ap.forma==='gotas'){ const tot=qtd*doses/ap.gotasMl, fr=Math.max(1,Math.ceil(tot/ap.frasco-1e-9)); r.qtdTotal=`${fr} ${fr>1?'frascos':'frasco'} (${ap.frasco} mL)`; r.totalTxt=`${fmt(tot,1)} mL no total`; }
+  else if(ap.un==='jato'){ const tot=qtd*doses, fr=Math.max(1,Math.ceil(tot/ap.frasco-1e-9)); r.qtdTotal=`${fr} ${fr>1?'frascos':'frasco'}`; r.totalTxt=`${tot} jatos no total`; }
+  else { const tot=Math.ceil(qtd*doses-1e-9); r.qtdTotal=`${tot} ${plural(tot,ap.un)}`; }
+  return r;
+}
+
+/* ===================== ESTADO ===================== */
+const LS='receituario-v1';
+let state = {peso:14, itens:[
+  {med:'amoxicilina',ap:'s400',ind:'oma'},
+  {med:'paracetamol',ap:'g',ind:'f'},
+  {med:'sfnasal',ap:'sp',ind:'lav'}], exemplo:true};
+try{ const s=JSON.parse(localStorage.getItem(LS)); if(s && Array.isArray(s.itens)) state=s; }catch(e){}
+const save=()=>{ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} };
+let grupo='Todos', busca='', cfg=null, editIdx=null, textoManual=false;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- lista de medicamentos ---------- */
+function renderGrupos(){
+  $('#grupos').innerHTML = GRUPOS.map(g=>`<button class="chip" aria-pressed="${g===grupo}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+}
+function renderLista(){
+  const q=norm(busca);
+  const meus = MEUS.filter(x=>(grupo==='Todos'||grupo==='Meus') && (!q || norm(x.nome).includes(q)));
+  const htmlMeus = meus.map(x=>`<button role="option" data-meu="${esc(x.id)}"><span><span class="nm">${esc(x.nome)}</span><span class="cm">${esc(x.poso)}</span></span><span class="badge b-meu">Meu</span></button>`).join('');
+  if(grupo==='Meus'){ $('#lista').innerHTML = htmlMeus || `<div class="empty">Você ainda não salvou nenhum medicamento. Use “+ Medicamento não listado”.</div>`; return; }
+  const ms=MEDS.filter(m=>(grupo==='Todos'||m.grupo===grupo) && (!q || norm(m.nome+' '+m.comerciais.join(' ')+' '+(m.rx||'')).includes(q)));
+  $('#lista').innerHTML = (ms.length||meus.length) ? htmlMeus + ms.map(m=>`<button role="option" data-m="${m.id}" aria-current="${cfg&&cfg.med===m.id}">
+    <span><span class="nm">${esc(m.nome)}</span><span class="cm">${esc(m.comerciais.join(' · '))}</span></span>
+    ${m.controle?`<span class="badge b-${m.controle}">${CTRL[m.controle].tag}</span>`:''}</button>`).join('')
+    : `<div class="empty">Nenhum medicamento encontrado para “${esc(busca)}”.</div>`;
+}
+
+/* ---------- configurador ---------- */
+function novoCfg(id){ const m=MED[id]; const c={med:id, ap:m.apres[0].id, ind:m.ind[0].id}; const mk=(state.marcas||{})[id]; if(mk && marcas(m,m.apres[0]).includes(mk)) c.marca=mk; return c; }
+function renderConfig(){
+  const box=$('#config');
+  if(!cfg){ box.innerHTML=`<div class="config"><div class="emptybox">Escolha um medicamento na lista acima para calcular a dose.</div></div>`; return; }
+  if(cfg.custom){ const c=cfg.custom; const vias=['oral','inalatório','nasal','oftálmico','otológico','tópico','retal','intramuscular'];
+    box.innerHTML=`<div class="config">
+      <div class="head"><h3>Medicamento não listado</h3><span class="cm">Escreva do jeito que vai sair na receita. Não calcula dose.</span></div>
+      <div class="row"><label class="label" for="cu-nome">Medicamento e apresentação</label><input id="cu-nome" class="inp" value="${esc(c.nome||'')}" placeholder="ex.: Fluconazol 50 mg/5 mL suspensão oral"></div>
+      <div class="inline"><div class="row"><label class="label" for="cu-qtd">Quantidade</label><input id="cu-qtd" class="inp" value="${esc(c.qtd||'')}" placeholder="ex.: 1 frasco"></div>
+        <div class="row"><label class="label" for="cu-via">Via</label><select id="cu-via">${vias.map(v=>`<option ${v===(c.via||'oral')?'selected':''}>${v}</option>`).join('')}</select></div></div>
+      <div class="row"><label class="label" for="cu-poso">Posologia</label><textarea id="cu-poso" class="inp" rows="3" placeholder="ex.: Tomar 3 mL via oral 1 vez ao dia por 7 dias.">${esc(c.poso||'')}</textarea></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="cu-salvar" ${c.salvar===false?'':'checked'}> Salvar em “Meus medicamentos” para usar de novo</label>
+      <div class="actions"><button class="btn" id="add">${editIdx!=null?'Salvar alteração':'Adicionar à receita'}</button>${c.meuId?'<button class="btn link" id="cu-apagar">Apagar dos meus medicamentos</button>':''}<button class="btn link" id="cancel">Cancelar</button></div>
+    </div>`; return; }
+  const peso=state.peso, m=MED[cfg.med], r=calc(cfg,peso), ind=r.ind, ap=r.ap;
+  const seg=(name,arr,cur,lab)=>`<div class="seg" role="group" aria-label="${lab}">${arr.map(([v,t])=>`<button data-set="${name}" data-v="${v}" aria-pressed="${String(v)===String(cur)}">${esc(t)}</button>`).join('')}</div>`;
+  let dosePart='';
+  if(ind.modo==='kg'){
+    const v=cfg.valor??ind.padrao;
+    dosePart=`<div class="row"><label class="label" for="c-valor">Dose (${esc(m.un)}/kg/${ind.base})</label>
+      <input id="c-valor" class="inp small" type="number" step="any" value="${v}" data-num="valor">
+      <span class="ref">Referência ${fmt(ind.min)} a ${fmt(ind.max)}${ind.maxDose?` · máx. ${fmt(ind.maxDose)} ${esc(m.un)}/dose`:''}${ind.maxDia?` · máx. ${fmt(ind.maxDia)} ${esc(m.un)}/dia`:''}</span></div>`;
+  } else if(ind.modo==='faixa'){
+    dosePart=`<div class="row"><span class="label">Faixa</span>${seg('faixa',ind.faixas.map((f,i)=>[i,f.label]),r.faixaIdx,'Faixa')}</div>`;
+  } else if(ind.modo==='livre'){
+    const pad = typeof ind.padrao==='function'? ind.padrao(peso) : (ind.padrao ?? ap.conc);
+    let gk='';
+    if(ind.guiaKg && peso){ const g=ind.guiaKg; gk=`<div><b>Para ${fmt(peso,1)} kg:</b> início ${fmt(g.inicial*peso,1)} mg/dia · alvo ${fmt(g.alvo*peso,1)} mg/dia · máximo ${fmt(Math.min(g.max*peso,g.maxMg),1)} mg/dia</div>`; }
+    dosePart=`<div class="guide"><span class="label">Como ajustar</span><ul>${ind.guia.map(g=>`<li>${esc(g)}</li>`).join('')}</ul>${gk}</div>
+      <div class="inline">
+        <div class="row"><label class="label" for="c-valor">Dose por tomada (${esc(m.un)})</label><input id="c-valor" class="inp small" type="number" step="${ind.step||'any'}" value="${cfg.valor??pad}" data-num="valor"></div>
+        ${ind.freqs.length>1?`<div class="row"><span class="label">Horário</span>${seg('freq',ind.freqs.map((f,i)=>[i,f.t]),cfg.freq??ind.freqPadrao??0,'Horário')}</div>`:''}
+      </div>`;
+  } else {
+    dosePart=`<div class="row"><span class="label">Orientação</span>${seg('opcao',ind.opcoes.map((o,i)=>[i,o.label]),cfg.opcao||0,'Orientação')}</div>`;
+  }
+  const showDias = ind.modo!=='opcoes' && !ind.cond && !r.unica;
+  const diasPart = showDias ? `<div class="row"><label class="label" for="c-dias">${ind.continuo?'Quantidade para (dias)':'Duração (dias)'}</label><input id="c-dias" class="inp small" type="number" min="1" step="1" value="${cfg.dias ?? (ind.continuo?ind.diasQtd:ind.dias) ?? ''}" data-num="dias"></div>` : '';
+
+  let res;
+  if(r.falta) res=`<div class="result bad"><div class="big">Informe o peso da criança para calcular.</div></div>`;
+  else {
+    const eq = r.real!=null && r.real>0 ? `<div class="eq num">= ${fmt(r.real,3)} ${esc(m.un)} por dose${r.porKg!=null?` · ${fmt(r.porKg)} ${esc(m.un)}/kg/dose · ${fmt(r.porKgDia)} ${esc(m.un)}/kg/dia`:''}${r.totalTxt?` · ${r.totalTxt}`:''}</div>`:'';
+    res=`<div class="result ${r.ok?'':'bad'}"><div class="big">${r.qtdTxt?esc(r.posologia).replace(esc(r.qtdTxt),`<mark>${esc(r.qtdTxt)}</mark>`):esc(r.posologia)}</div>${eq}
+      <div class="eq">Dispensar: <b>${esc(r.qtdTotal)}</b></div>
+      ${(r.avisos.length||m.controle)?`<div class="alerts">${m.controle?`<div class="alert ${CTRL[m.controle].cls}">${CTRL[m.controle].txt}</div>`:''}${r.avisos.map(a=>`<div class="alert ${a.danger?'danger':''}">${esc(a.t)}</div>`).join('')}</div>`:''}</div>`;
+  }
+  box.innerHTML=`<div class="config">
+    <div class="head"><h3>${esc(m.nome)}</h3>${revBadge(m.id)}<span class="cm">${esc(m.comerciais.join(' · '))}</span></div>
+    ${(cfg.marca && !marcas(m,ap).includes(cfg.marca) ? (delete cfg.marca, '') : '')}${marcas(m,ap).length?`<div class="row"><span class="label">Nome na receita</span><div class="seg" role="group" aria-label="Nome na receita"><button data-marca="" aria-pressed="${!cfg.marca}">${esc(m.rx||m.nome)} (princípio ativo)</button>${marcas(m,ap).map(b=>`<button data-marca="${esc(b)}" aria-pressed="${cfg.marca===b}">${esc(b)}</button>`).join('')}</div><span class="ref">Na receita: ${esc(linhaNome(m,ap,cfg.marca))}</span></div>`:''}
+    <div class="row"><span class="label">Apresentação</span>${seg('ap',m.apres.map(a=>[a.id,a.label]),ap.id,'Apresentação')}</div>
+    ${m.ind.length>1?`<div class="row"><span class="label">Indicação</span>${seg('ind',m.ind.map(i=>[i.id,i.label]),ind.id,'Indicação')}</div>`:`<div class="row"><span class="label">Indicação</span><div>${esc(ind.label)}</div></div>`}
+    ${dosePart}
+    ${diasPart?`<div class="inline">${diasPart}</div>`:''}
+    ${res}
+    <div class="meta">${ind.obs?`<div><b>Observação:</b> ${esc(ind.obs)}</div>`:''}<div><b>Fonte:</b> ${esc(ind.fonte||'')}</div></div>
+    <div class="actions"><button class="btn" id="add" ${r.ok&&!r.falta?'':'disabled'}>${editIdx!=null?'Salvar alteração':'Adicionar à receita'}</button>${editIdx!=null?'<button class="btn link" id="cancel">Cancelar edição</button>':''}</div>
+  </div>`;
+}
+
+/* ---------- receita ---------- */
+const VIAS=[['oral','USO ORAL'],['inalatório','USO INALATÓRIO'],['nasal','USO NASAL'],['oftálmico','USO OFTÁLMICO'],['otológico','USO OTOLÓGICO'],['intramuscular','USO INTRAMUSCULAR'],['tópico','USO TÓPICO'],['retal','USO RETAL']];
+function gerarTexto(lista){
+  const peso=state.peso; let n=0; const out=[];
+  for(const [via,tit] of VIAS){
+    const its=lista.filter(x=>x.r.ap.via===via); if(!its.length) continue;
+    out.push(tit,'');
+    for(const {r,it} of its){ n++; r.marca=it.marca;
+      out.push(`${n}. ${r.custom?r.med.nome:linhaNome(r.med,r.ap,r.marca)} ——— ${r.qtdTotal}`);
+      out.push(`   ${r.posologia}`,'');
+    }
+  }
+  return out.join('\n').trim();
+}
+function renderReceita(){
+  const peso=state.peso;
+  const lista=state.itens.map((it,i)=>({it,i,r:calc(it,peso)}));
+  $('#itens').innerHTML = lista.length ? lista.map(({it,i,r})=>`<div class="item ${r.med.controle?'ctrl':''}">
+      <span class="n">${i+1}</span>
+      <div style="min-width:0"><div class="t">${esc(it.marca||r.med.nome)} <span class="ref">${r.custom?'<span class="badge b-meu">não listado</span>':esc(it.marca?linhaNome(r.med,r.ap,it.marca).slice(it.marca.length+1):r.ap.label)}</span></div>
+        <div class="p">${r.falta?'Informe o peso':esc(r.posologia)}</div>
+        ${r.med.controle?`<span class="badge b-${r.med.controle}">${CTRL[r.med.controle].tag} – copiar separado</span>`:''}
+        ${r.avisos.some(a=>a.danger)?`<span class="badge b-rev">Conferir</span>`:''}</div>
+      <div class="tools"><button data-edit="${i}">Editar</button><button data-copy1="${i}">Copiar</button><button data-del="${i}">Remover</button></div></div>`).join('')
+    : `<div class="emptybox">Nenhum item ainda. Escolha um medicamento, confira a dose e toque em “Adicionar à receita”.</div>`;
+  if(!textoManual) $('#texto').value = lista.some(x=>x.r.falta) ? 'Informe o peso para gerar a receita.' : gerarTexto(lista.filter(x=>!x.r.med.controle)) + (lista.some(x=>x.r.med.controle)?'\n\n(Medicamentos controlados: use “Copiar” no item, para a receita própria.)':'');
+  const c=state.itens.length; $('#mb-count').textContent = c? `${c} ${c>1?'itens':'item'} na receita` : 'Receita vazia';
+}
+
+async function copiar(txt, btn){
+  try{ await navigator.clipboard.writeText(txt); toast('Receita copiada. Agora é só colar no sistema.'); }
+  catch(e){ const t=$('#texto'); t.value=txt; t.focus(); t.select(); toast('Texto selecionado. Use Ctrl+C para copiar.'); }
+}
+let tt; function toast(m){ $('#toast').textContent=m; clearTimeout(tt); tt=setTimeout(()=>$('#toast').textContent='',3500); }
+
+/* ---------- revisão ---------- */
+function renderTabela(){
+  const q=norm($('#busca-rev').value||''); let rows=[];
+  for(const m of MEDS){
+    const st=(REV[m.id]||{}).status||'';
+    if(revFiltro==='pend' && st) continue; if(revFiltro==='fix' && st!=='corrigir') continue; if(revFiltro==='ok' && st!=='ok') continue;
+    const inds=m.ind.filter(ind=>!q || norm(m.nome+' '+m.comerciais.join(' ')+' '+ind.label).includes(q));
+    inds.forEach((ind,k)=>{
+    let dose='', max='', dur='';
+    if(ind.modo==='kg'){ dose=`${fmt(ind.min)}–${fmt(ind.max)} ${m.un}/kg/${ind.base} (padrão ${fmt(ind.padrao)})`; max=[ind.maxDose&&`${fmt(ind.maxDose)} ${m.un}/dose`,ind.maxDia&&`${fmt(ind.maxDia)} ${m.un}/dia`,ind.minDose&&`mín. ${fmt(ind.minDose)} ${m.un}`].filter(Boolean).join('<br>'); }
+    else if(ind.modo==='faixa') dose=ind.faixas.map(f=>esc(f.label)).join('<br>');
+    else if(ind.modo==='livre'){ dose=ind.guia.map(esc).join('<br>'); max=ind.maxDia?`${fmt(ind.maxDia)} ${m.un}/dia`:''; }
+    else dose=ind.opcoes.map(o=>esc(o.texto)).join('<br>');
+    const fr = ind.freqs ? ind.freqs.map(f=>f.t).join(' / ') : (ind.freq || (ind.intervalo?H(ind.intervalo):''));
+    dur=[fr, ind.cond, ind.unica?'dose única':'', ind.continuo?'uso contínuo':'', ind.dias?`${ind.dias} dias`:''].filter(Boolean).map(esc).join(' · ');
+    const rv = k ? '' : `<td rowspan="${inds.length}">${revCell(m)}</td>`;
+    rows.push(`<tr>${rv}<td class="med">${esc(m.nome)}${m.controle?`<br><span class="badge b-${m.controle}">${CTRL[m.controle].tag}</span>`:''}</td><td>${esc(m.comerciais.join(', '))}</td>
+      <td>${m.apres.map(a=>esc(a.label)+(a.forma==='gotas'?` <small>(${a.gotasMl} gotas/mL)</small>`:'')+(a.frascos?` <small>frascos ${a.frascos.map(f=>f.t.replace(/^de /,'')).join(', ')}</small>`:'')).join('<br>')}</td>
+      <td><b>${esc(ind.label)}</b><br>${dose}</td><td>${max}</td><td>${dur}</td>
+      <td>${esc([ind.obs, ...m.apres.map(a=>a.conferir)].filter(Boolean).join(' '))}</td><td><small>${esc(ind.fonte||'')}</small></td></tr>`);
+  }); }
+  $('#tabela').innerHTML=rows.join(''); $('#contagem').textContent=`${MEDS.length} medicamentos · ${rows.length} linhas`;
+}
+
+/* ---------- login e banco (Supabase) ---------- */
+const CFG = window.CONFIG || {};
+const sb = (window.supabase && CFG.url && CFG.key) ? window.supabase.createClient(CFG.url, CFG.key) : null;
+function adaptador(uid){
+  // mesma interface que a página já usa: collection(nome).doc(id).set/delete e onSnapshot
+  return { collection(nome){ return {
+    doc(id){ return {
+      set: async data => { const {error}=await sb.from(nome).upsert({user_id:uid,id,data},{onConflict:'user_id,id'}); if(error) throw {code:'unavailable',message:error.message}; },
+      delete: async () => { const {error}=await sb.from(nome).delete().eq('user_id',uid).eq('id',id); if(error) throw {code:'unavailable',message:error.message}; } }; },
+    onSnapshot(next, err){
+      sb.from(nome).select('id,data').eq('user_id',uid).then(({data,error})=>{
+        if(error){ err && err({code:'unavailable',message:error.message}); return; }
+        next({docs:(data||[]).map(r=>({id:r.id,exists:true,data:()=>r.data}))}); });
+      return ()=>{}; } }; } };
+}
+let resolverLogin;
+const logado = new Promise(r=>resolverLogin=r);
+async function conectar(){ if(!sb) return null; const uid = await logado; return adaptador(uid); }
+function mostrarLogin(msg){ $('#login').hidden=false; $('#lg-erro').textContent=msg||''; }
+if(!sb){ mostrarLogin('Site ainda não configurado (faltam as chaves do Supabase na Netlify).'); }
+else {
+  sb.auth.getSession().then(({data})=>{ const u=data.session?.user; if(u){ $('#login').hidden=true; resolverLogin(u.id); } else mostrarLogin(); });
+  $('#login-form').addEventListener('submit', async e=>{ e.preventDefault(); $('#lg-btn').disabled=true; $('#lg-erro').textContent='';
+    const {data,error}=await sb.auth.signInWithPassword({email:$('#lg-email').value.trim(), password:$('#lg-senha').value});
+    $('#lg-btn').disabled=false;
+    if(error){ $('#lg-erro').textContent='E-mail ou senha incorretos.'; return; }
+    $('#lg-senha').value=''; $('#login').hidden=true; resolverLogin(data.user.id); });
+}
+async function sair(){ try{ localStorage.removeItem(LS); }catch(e){} if(sb) await sb.auth.signOut(); location.reload(); }
+$('#sair').addEventListener('click', sair);
+// sai sozinho após 30 min sem uso
+let ultimo=Date.now(); ['click','keydown','touchstart','input'].forEach(ev=>addEventListener(ev,()=>ultimo=Date.now(),{passive:true}));
+setInterval(()=>{ if(Date.now()-ultimo>30*60*1000) sair(); }, 60*1000);
+
+/* ---------- revisão salva (db) ---------- */
+const APROVADOS=['paracetamol', 'dipirona', 'ibuprofeno', 'amoxicilina', 'amoxclav', 'azitro', 'cefalexina', 'cefuroxima', 'cefdinir', 'smxtmp', 'salbspray', 'salbneb', 'prednisolona', 'beclo', 'pulmicort', 'budenasal', 'sfnasal', 'filinar', 'aires', 'deslora', 'lora', 'cetiri', 'koided', 'hidroxi', 'ondan', 'sro', 'simeti', 'zinco', 'ferroso', 'ferripoli', 'mebend', 'albend', 'nistatina', 'mfdc', 'mfdl', 'lisdex', 'atomox', 'clonidina', 'risperi', 'aripi', 'melato', 'decanasal', 'torante', 'dexaoral', 'montelu', 'ambroxol', 'racecado', 'floratil', 'floripa', 'colikids', 'enterog', 'bromo', 'dimen', 'buscopan', 'cocyntal', 'lactulose', 'peglax', 'minilax', 'fexo', 'polara', 'tobra', 'moxi', 'cipro', 'olopa', 'assadura', 'dermodex', 'hidroco', 'desonida', 'mometa', 'mupiro', 'fusid', 'neobac', 'ceto', 'micona', 'clotri', 'perme1', 'perme5', 'iverm', 'nitazox', 'metro', 'vitd', 'aciclo'];
+const REV_BASE=Object.fromEntries(APROVADOS.map(id=>[id,{status:'ok',nota:'Aprovado pela Dra. Anna em 18/10/2026.'}]));
+let REV={...REV_BASE}, revDb=null, revFiltro='todos', revPronto=false;
+function revBadge(id){ const st=(REV[id]||{}).status; return st==='ok'?'<span class="badge b-ok">Revisado</span>':st==='corrigir'?'<span class="badge b-fix">A corrigir</span>':'<span class="badge b-rev">Não revisado</span>'; }
+function revCell(m){
+  const r=REV[m.id]||{}; if(!revDb) return revBadge(m.id);
+  return `<div class="revbox" data-rev="${m.id}"><div class="seg"><button class="ok" data-st="ok" aria-pressed="${r.status==='ok'}">✓ OK</button><button class="fix" data-st="corrigir" aria-pressed="${r.status==='corrigir'}">Corrigir</button></div>
+    <textarea id="nota-${m.id}" placeholder="O que corrigir (opcional)" aria-label="Nota sobre ${esc(m.nome)}">${esc(r.nota||'')}</textarea></div>`;
+}
+function revProgresso(){
+  const ok=MEDS.filter(m=>(REV[m.id]||{}).status==='ok').length, fix=MEDS.filter(m=>(REV[m.id]||{}).status==='corrigir').length;
+  $('#rev-bar').style.width=`${(ok+fix)/MEDS.length*100}%`;
+  $('#rev-prog').textContent = !revPronto ? (revDb===false?'A revisão salva não está disponível nesta visualização.':'Carregando revisão…') : `${ok+fix} de ${MEDS.length} conferidos · ${ok} OK · ${fix} a corrigir`;
+}
+const fila={};
+function salvarRev(id, patch){
+  const atual={...(REV[id]||{}), ...patch, em:new Date().toISOString()};
+  REV[id]=atual; revProgresso(); renderConfig();
+  fila[id]=(fila[id]||Promise.resolve()).then(()=>revDb.collection('revisao').doc(id).set({status:atual.status||'',nota:atual.nota||'',em:atual.em}))
+    .catch(e=>toast('Não consegui salvar a revisão. Verifique a internet e tente de novo.'));
+}
+(async()=>{
+  revDb = await conectar();
+  if(!revDb){ revDb=false; revProgresso(); return; }
+  revDb.collection('meus').onSnapshot(snap=>{ MEUS=snap.docs.filter(d=>d.exists).map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.nome.localeCompare(b.nome,'pt')); renderLista(); }, ()=>{});
+  revDb.collection('revisao').onSnapshot(snap=>{
+    const n={}; snap.docs.forEach(d=>{ if(d.exists) n[d.id]=d.data(); });
+    const editando=document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('nota-');
+    REV={...REV_BASE, ...n}; revPronto=true; revProgresso(); renderConfig(); renderListaBadges(); if(!editando) renderTabela();
+  }, ()=>{ revPronto=false; revProgresso(); });
+})();
+function renderListaBadges(){}
+$('#tabela').addEventListener('click',e=>{ const b=e.target.closest('[data-st]'); if(!b||!revDb) return; const id=b.closest('[data-rev]').dataset.rev;
+  const st = (REV[id]||{}).status===b.dataset.st ? '' : b.dataset.st; salvarRev(id,{status:st}); renderTabela(); });
+$('#tabela').addEventListener('change',e=>{ if(!e.target.id.startsWith('nota-')||!revDb) return; const id=e.target.id.slice(5); const nota=e.target.value.trim();
+  salvarRev(id,{nota, status: nota && !(REV[id]||{}).status ? 'corrigir' : (REV[id]||{}).status}); renderTabela(); });
+$('#rev-filtro').addEventListener('click',e=>{ const b=e.target.closest('[data-f]'); if(!b) return; revFiltro=b.dataset.f;
+  document.querySelectorAll('#rev-filtro button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderTabela(); });
+
+/* ---------- meus medicamentos (db, ou neste navegador se o db não estiver disponível) ---------- */
+let MEUS = Array.isArray(state.meus) ? state.meus : [];
+function salvarMeu(c){
+  const id = c.meuId || ('m'+Date.now().toString(36));
+  const doc = {nome:c.nome, qtd:c.qtd||'', via:c.via||'oral', poso:c.poso, em:new Date().toISOString()};
+  MEUS = [...MEUS.filter(x=>x.id!==id), {id, ...doc}].sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+  if(revDb) revDb.collection('meus').doc(id).set(doc).catch(()=>toast('Não consegui salvar em “Meus medicamentos”.'));
+  else { state.meus=MEUS; save(); }
+  renderLista(); return id;
+}
+function apagarMeu(id){ MEUS=MEUS.filter(x=>x.id!==id); if(revDb) revDb.collection('meus').doc(id).delete().catch(()=>{}); else { state.meus=MEUS; save(); } }
+$('#novo-custom').addEventListener('click',()=>{ cfg={custom:{nome:busca||'',via:'oral'}}; editIdx=null; renderConfig(); $('#config').scrollIntoView({block:'nearest',behavior:'smooth'}); $('#cu-nome')&&$('#cu-nome').focus(); });
+
+/* ---------- eventos ---------- */
+function refresh(){ renderLista(); renderConfig(); renderReceita(); }
+$('#peso').value = state.peso || '';
+$('#peso').addEventListener('input',e=>{ const v=parseFloat(String(e.target.value).replace(',','.')); state.peso = v>0?v:0; textoManual=false; save(); renderConfig(); renderReceita(); });
+$('#busca').addEventListener('input',e=>{ busca=e.target.value; renderLista(); });
+$('#grupos').addEventListener('click',e=>{ const b=e.target.closest('[data-g]'); if(!b) return; grupo=b.dataset.g; renderGrupos(); renderLista(); });
+$('#lista').addEventListener('click',e=>{ const mm=e.target.closest('[data-meu]');
+  if(mm){ const x=MEUS.find(y=>y.id===mm.dataset.meu); if(x){ cfg={custom:{nome:x.nome,qtd:x.qtd,via:x.via,poso:x.poso,meuId:x.id}}; editIdx=null; renderConfig(); $('#config').scrollIntoView({block:'nearest',behavior:'smooth'}); } return; }
+  const b=e.target.closest('[data-m]'); if(!b) return; cfg=novoCfg(b.dataset.m); editIdx=null; renderLista(); renderConfig(); $('#config').scrollIntoView({block:'nearest',behavior:'smooth'}); });
+$('#config').addEventListener('click',e=>{
+  const mb=e.target.closest('[data-marca]');
+  if(mb){ const v=mb.dataset.marca; if(v) cfg.marca=v; else delete cfg.marca; state.marcas={...(state.marcas||{}),[cfg.med]:v}; save(); renderConfig(); return; }
+  const b=e.target.closest('[data-set]');
+  if(b){ const k=b.dataset.set, v=b.dataset.v;
+    if(k==='ap') cfg.ap=v;
+    else if(k==='ind'){ cfg.ind=v; delete cfg.valor; delete cfg.dias; delete cfg.faixa; delete cfg.opcao; delete cfg.freq; }
+    else cfg[k]=Number(v);
+    if(k==='ap' && MED[cfg.med].ind.find(i=>i.id===cfg.ind).modo==='livre') delete cfg.valor;
+    renderConfig(); return; }
+  if(e.target.id==='add' && cfg.custom){
+    const c={nome:$('#cu-nome').value.trim(), qtd:$('#cu-qtd').value.trim(), via:$('#cu-via').value, poso:$('#cu-poso').value.trim(), meuId:cfg.custom.meuId};
+    if(!c.nome||!c.poso){ toast('Preencha o medicamento e a posologia.'); return; }
+    if($('#cu-salvar').checked) c.meuId = salvarMeu(c);
+    cfg={custom:c};
+  }
+  if(e.target.id==='cu-apagar'){ apagarMeu(cfg.custom.meuId); cfg=null; refresh(); toast('Removido dos seus medicamentos.'); return; }
+  if(e.target.id==='add'){ if(editIdx!=null) state.itens[editIdx]={...cfg}; else state.itens.push({...cfg}); state.exemplo=false; editIdx=null; cfg=null; textoManual=false; save(); refresh(); toast('Item adicionado à receita.'); }
+  if(e.target.id==='cancel'){ editIdx=null; cfg=null; refresh(); }
+});
+$('#config').addEventListener('change',e=>{ const k=e.target.dataset.num; if(!k) return; const v=parseFloat(String(e.target.value).replace(',','.')); if(v>0) cfg[k]=v; else delete cfg[k]; renderConfig(); });
+$('#itens').addEventListener('click',e=>{
+  const d=e.target.dataset;
+  if(d.del!=null){ state.itens.splice(+d.del,1); textoManual=false; save(); renderReceita(); }
+  if(d.edit!=null){ editIdx=+d.edit; const src=state.itens[editIdx]; cfg=src.custom?{custom:{...src.custom}}:{...src}; refresh(); $('#config').scrollIntoView({block:'nearest',behavior:'smooth'}); }
+  if(d.copy1!=null){ const r=calc(state.itens[+d.copy1],state.peso); copiar(`${r.custom?r.med.nome:linhaNome(r.med,r.ap,state.itens[+d.copy1].marca)} ——— ${r.qtdTotal}\n${r.posologia}`); }
+});
+$('#texto').addEventListener('input',()=>{ textoManual=true; });
+$('#copiar').addEventListener('click',()=>copiar($('#texto').value));
+$('#copiar-m').addEventListener('click',()=>copiar($('#texto').value));
+$('#limpar').addEventListener('click',()=>{ state.itens=[]; textoManual=false; save(); renderReceita(); toast('Receita limpa.'); });
+document.querySelector('nav.tabs').addEventListener('click',e=>{ const b=e.target.closest('[role=tab]'); if(!b) return;
+  document.querySelectorAll('nav.tabs [role=tab]').forEach(t=>t.setAttribute('aria-selected', t===b));
+  $('#view-rx').hidden = b.id!=='tab-rx'; $('#view-rev').hidden = b.id!=='tab-rev'; document.querySelector('.mobilebar').hidden = b.id!=='tab-rx'; });
+$('#busca-rev').addEventListener('input',renderTabela);
+
+renderGrupos(); cfg=novoCfg('amoxicilina'); refresh(); renderTabela();
+</script>
+
+</body>
+</html>
